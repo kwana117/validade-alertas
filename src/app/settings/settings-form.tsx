@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import type { SettingsState } from "./types";
 import { initialSettingsState } from "./types";
 
@@ -13,10 +13,20 @@ type Props = {
 };
 
 export function SettingsForm({ action, chatId }: Props) {
-  const [state, formAction] = useFormState(action, initialSettingsState);
+  const [state, formAction] = useActionState(action, initialSettingsState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(formData: FormData) {
+    setIsSubmitting(true);
+    try {
+      await formAction(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="telegram_chat_id">Chat ID do Telegram</label>
         <input
@@ -42,14 +52,18 @@ export function SettingsForm({ action, chatId }: Props) {
         </p>
       ) : null}
 
-      <SubmitButton>Guardar</SubmitButton>
+      <SubmitButton pending={isSubmitting}>Guardar</SubmitButton>
     </form>
   );
 }
 
-function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
-
+function SubmitButton({
+  children,
+  pending,
+}: {
+  children: React.ReactNode;
+  pending: boolean;
+}) {
   return (
     <button
       type="submit"

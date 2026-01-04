@@ -37,7 +37,7 @@ async function updateItemStatus(formData: FormData) {
   const allowed = ["active", "consumed", "discarded"];
   if (!allowed.includes(newStatus)) return;
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -56,7 +56,7 @@ async function updateItemStatus(formData: FormData) {
 }
 
 export default async function ItemsPage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

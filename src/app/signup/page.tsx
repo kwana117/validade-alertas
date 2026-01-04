@@ -24,7 +24,7 @@ async function signupAction(
     return { error: "As palavras-passe têm de ser iguais." };
   }
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -43,7 +43,7 @@ async function signupAction(
 }
 
 export default async function SignupPage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

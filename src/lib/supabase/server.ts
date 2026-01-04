@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
-import type { CookieOptions } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
-function ensureEnv(name: string) {
+function getEnvVar(name: string) {
   const value = process.env[name];
   if (!value) {
     throw new Error(`Variável de ambiente em falta: ${name}`);
@@ -10,23 +10,21 @@ function ensureEnv(name: string) {
   return value;
 }
 
-export function createServerSupabaseClient() {
-  const cookieStore = cookies();
+export async function createServerSupabaseClient(): Promise<SupabaseClient> {
+  const cookieStore = await cookies();
 
   return createServerClient(
-    ensureEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    ensureEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    getEnvVar("NEXT_PUBLIC_SUPABASE_URL"),
+    getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, _options: CookieOptions) {
-          void _options;
-          cookieStore.delete(name);
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
         },
       },
     },

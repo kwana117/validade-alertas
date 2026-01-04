@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import type { AddItemState } from "./types";
 import { initialAddItemState } from "./types";
 import { LOCATIONS } from "@/lib/items";
@@ -15,10 +15,20 @@ export function AddItemForm({ action, defaultLocation }: Props) {
   const searchParams = useSearchParams();
   const presetLocation = searchParams.get("loc") ?? defaultLocation;
 
-  const [state, formAction] = useFormState(action, initialAddItemState);
+  const [state, formAction] = useActionState(action, initialAddItemState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(formData: FormData) {
+    setIsSubmitting(true);
+    try {
+      await formAction(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="name">Nome do item</label>
         <input
@@ -56,14 +66,18 @@ export function AddItemForm({ action, defaultLocation }: Props) {
         </p>
       ) : null}
 
-      <SubmitButton>Guardar item</SubmitButton>
+      <SubmitButton pending={isSubmitting}>Guardar item</SubmitButton>
     </form>
   );
 }
 
-function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
-
+function SubmitButton({
+  children,
+  pending,
+}: {
+  children: React.ReactNode;
+  pending: boolean;
+}) {
   return (
     <button
       type="submit"

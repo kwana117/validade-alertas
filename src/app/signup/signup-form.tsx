@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import type { AuthFormState } from "@/lib/auth";
 import { initialAuthState } from "@/lib/auth";
 
@@ -13,10 +13,20 @@ type Props = {
 };
 
 export function SignupForm({ action }: Props) {
-  const [state, formAction] = useFormState(action, initialAuthState);
+  const [state, formAction] = useActionState(action, initialAuthState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(formData: FormData) {
+    setIsSubmitting(true);
+    try {
+      await formAction(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="email">Email</label>
         <input
@@ -59,7 +69,7 @@ export function SignupForm({ action }: Props) {
         </p>
       ) : null}
 
-      <SubmitButton>Criar conta</SubmitButton>
+      <SubmitButton pending={isSubmitting}>Criar conta</SubmitButton>
 
       <p className="text-sm text-slate-600">
         Já tens conta?{" "}
@@ -75,9 +85,13 @@ export function SignupForm({ action }: Props) {
   );
 }
 
-function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
-
+function SubmitButton({
+  children,
+  pending,
+}: {
+  children: React.ReactNode;
+  pending: boolean;
+}) {
   return (
     <button
       type="submit"

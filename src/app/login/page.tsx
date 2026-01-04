@@ -19,7 +19,7 @@ async function loginAction(
     return { error: "Preenche o email e a palavra-passe." };
   }
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -38,7 +38,7 @@ async function loginAction(
 }
 
 export default async function LoginPage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

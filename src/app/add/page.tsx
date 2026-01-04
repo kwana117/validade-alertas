@@ -26,7 +26,7 @@ async function addItemAction(
     return { error: "Local inválido." };
   }
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -57,7 +57,7 @@ type Props = {
 };
 
 export default async function AddPage({ searchParams }: Props) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
