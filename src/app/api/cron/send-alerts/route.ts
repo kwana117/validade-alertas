@@ -47,6 +47,16 @@ async function handleCron() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  type ProfileRef = { telegram_chat_id?: string | null } | null;
+  type ItemWithProfile = {
+    id: string;
+    name: string;
+    expires_at: string;
+    location: string;
+    user_id: string;
+    profiles?: ProfileRef | ProfileRef[];
+  };
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -58,8 +68,10 @@ async function handleCron() {
     }
   >();
 
-  for (const item of data ?? []) {
-    const chatId = item.profiles?.telegram_chat_id;
+  for (const item of (data ?? []) as ItemWithProfile[]) {
+    const chatId = Array.isArray(item.profiles)
+      ? item.profiles[0]?.telegram_chat_id
+      : item.profiles?.telegram_chat_id;
     if (!chatId) continue;
 
     const expiresAt = new Date(item.expires_at);

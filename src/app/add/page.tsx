@@ -7,6 +7,12 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+type LocationValue = (typeof LOCATIONS)[number]["value"];
+
+function isLocationValue(value: string): value is LocationValue {
+  return LOCATIONS.some((loc) => loc.value === value);
+}
+
 async function addItemAction(
   _prevState: AddItemState,
   formData: FormData,
@@ -21,8 +27,7 @@ async function addItemAction(
     return { error: "Preenche todos os campos." };
   }
 
-  const allowedLocations = LOCATIONS.map((loc) => loc.value);
-  if (!allowedLocations.includes(location)) {
+  if (!isLocationValue(location)) {
     return { error: "Local inválido." };
   }
 
@@ -51,9 +56,9 @@ async function addItemAction(
 }
 
 type Props = {
-  searchParams?: {
+  searchParams?: Promise<{
     loc?: string;
-  };
+  }>;
 };
 
 export default async function AddPage({ searchParams }: Props) {
@@ -66,7 +71,8 @@ export default async function AddPage({ searchParams }: Props) {
     redirect("/login");
   }
 
-  const locationParam = searchParams?.loc;
+  const resolvedSearchParams = await searchParams;
+  const locationParam = resolvedSearchParams?.loc;
   const defaultLocation =
     locationParam && LOCATIONS.some((loc) => loc.value === locationParam)
       ? locationParam

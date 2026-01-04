@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Validade Alertas",
@@ -43,7 +32,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-PT">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}
+        className="antialiased bg-slate-50 text-slate-900 font-sans"
       >
         <div className="min-h-screen">
           <header className="border-b border-slate-200 bg-white">
