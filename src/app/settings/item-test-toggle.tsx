@@ -15,7 +15,7 @@ export function ItemTestToggle({ enabled, action }: Props) {
 
   return (
     <form ref={formRef} action={formAction} className="space-y-2">
-      <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             Ativar botões de teste por item (provisório)

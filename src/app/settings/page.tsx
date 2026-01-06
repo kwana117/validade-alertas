@@ -6,8 +6,11 @@ import type { SettingsState } from "./types";
 import { SettingsForm } from "./settings-form";
 import { TestTelegramButton } from "./test-telegram-button";
 import { ItemTestToggle } from "./item-test-toggle";
+import { AlertSettingsForm } from "./alert-settings-form";
 
 export const dynamic = "force-dynamic";
+
+const DEFAULT_OFFSETS = [7, 3, 1, 0];
 
 async function updateTelegramAction(
   _prevState: SettingsState,
@@ -85,6 +88,56 @@ async function updateItemTestToggle(
   };
 }
 
+async function updateAlertSettings(
+  _prevState: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  "use server";
+
+  const rawOffsets = formData.getAll("offsets").map((value) =>
+    Number(value),
+  );
+  const offsets = rawOffsets
+    .filter((value) => Number.isFinite(value))
+    .filter((value) => [30, 14, 7, 3, 1, 0].includes(value));
+  const uniqueOffsets = Array.from(new Set(offsets));
+
+  if (uniqueOffsets.length === 0) {
+    return { error: "Seleciona pelo menos um intervalo de alertas." };
+  }
+
+  const includeExpired = formData.get("include_expired") === "on";
+  const rawExpiredMax = Number(formData.get("expired_max_days"));
+  const expiredMaxDays = Number.isFinite(rawExpiredMax)
+    ? Math.max(1, Math.min(365, rawExpiredMax))
+    : 7;
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      alert_offsets_days: uniqueOffsets,
+      alert_include_expired: includeExpired,
+      alert_expired_max_days: expiredMaxDays,
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    return { error: `Não foi possível guardar os alertas. ${error.message}` };
+  }
+
+  revalidatePath("/settings");
+  return { success: "Alertas atualizados com sucesso." };
+}
+
 export default async function SettingsPage() {
   const supabase = await createServerSupabaseClient();
   const {
@@ -97,9 +150,18 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("telegram_chat_id, enable_item_test_button")
+    .select(
+      "telegram_chat_id, enable_item_test_button, alert_offsets_days, alert_include_expired, alert_expired_max_days",
+    )
     .eq("id", user.id)
     .maybeSingle();
+
+  const alertOffsets =
+    profile?.alert_offsets_days && profile.alert_offsets_days.length > 0
+      ? profile.alert_offsets_days
+      : DEFAULT_OFFSETS;
+  const alertIncludeExpired = profile?.alert_include_expired ?? true;
+  const alertExpiredMaxDays = profile?.alert_expired_max_days ?? 7;
 
   return (
     <div className="space-y-8">
@@ -150,6 +212,13 @@ export default async function SettingsPage() {
           <TestTelegramButton />
         </section>
       </div>
+
+      <AlertSettingsForm
+        initialOffsets={alertOffsets}
+        initialIncludeExpired={alertIncludeExpired}
+        initialExpiredMaxDays={alertExpiredMaxDays}
+        action={updateAlertSettings}
+      />
 
       <ItemTestToggle
         enabled={profile?.enable_item_test_button ?? false}

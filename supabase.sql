@@ -6,11 +6,23 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   telegram_chat_id text,
   enable_item_test_button boolean not null default false,
+  alert_offsets_days int[] not null default '{7,3,1,0}',
+  alert_include_expired boolean not null default true,
+  alert_expired_max_days int not null default 7,
   created_at timestamptz not null default timezone('utc', now())
 );
 
 alter table public.profiles
   add column if not exists enable_item_test_button boolean not null default false;
+
+alter table public.profiles
+  add column if not exists alert_offsets_days int[] not null default '{7,3,1,0}';
+
+alter table public.profiles
+  add column if not exists alert_include_expired boolean not null default true;
+
+alter table public.profiles
+  add column if not exists alert_expired_max_days int not null default 7;
 
 -- Itens monitorizados
 create table if not exists public.items (
