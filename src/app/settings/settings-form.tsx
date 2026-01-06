@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { SettingsState } from "./types";
 import { initialSettingsState } from "./types";
 
@@ -9,12 +9,29 @@ type Props = {
     state: SettingsState,
     formData: FormData,
   ) => Promise<SettingsState>;
-  chatId: string | null;
+  initialTelegramChatId: string | null;
 };
 
-export function SettingsForm({ action, chatId }: Props) {
+export function SettingsForm({ action, initialTelegramChatId }: Props) {
   const [state, formAction] = useActionState(action, initialSettingsState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [value, setValue] = useState(initialTelegramChatId ?? "");
+  const lastSyncedRef = useRef(initialTelegramChatId ?? "");
+
+  useEffect(() => {
+    const next = initialTelegramChatId ?? "";
+    if (value !== "" || next === lastSyncedRef.current) return;
+    setValue(next);
+    lastSyncedRef.current = next;
+  }, [initialTelegramChatId, value]);
+
+  useEffect(() => {
+    if (!state.success) return;
+    const next = initialTelegramChatId ?? "";
+    if (!next || next === lastSyncedRef.current) return;
+    setValue(next);
+    lastSyncedRef.current = next;
+  }, [initialTelegramChatId, state.success]);
 
   async function handleSubmit(formData: FormData) {
     setIsSubmitting(true);
@@ -38,7 +55,8 @@ export function SettingsForm({ action, chatId }: Props) {
           id="telegram_chat_id"
           name="telegram_chat_id"
           placeholder="Ex: 123456789"
-          defaultValue={chatId ?? ""}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
         />
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Abre o bot e escreve qualquer coisa para poderes copiar o chat ID.

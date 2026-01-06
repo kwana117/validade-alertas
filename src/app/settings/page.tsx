@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import type { SettingsState } from "./types";
 import { SettingsForm } from "./settings-form";
 import { TestTelegramButton } from "./test-telegram-button";
@@ -37,14 +38,21 @@ async function updateTelegramAction(
     redirect("/login");
   }
 
-  const { error } = await supabase
+  const { data: updatedProfile, error } = await supabase
     .from("profiles")
-    .update({ telegram_chat_id: telegramChatId })
-    .eq("id", user.id);
+    .upsert({ id: user.id, telegram_chat_id: telegramChatId }, { onConflict: "id" })
+    .select("telegram_chat_id")
+    .maybeSingle();
 
   if (error) {
     return {
       error: `Não foi possível guardar o chat ID. ${error.message}`,
+    };
+  }
+
+  if (!updatedProfile) {
+    return {
+      error: "Não foi possível guardar o chat ID. Perfil não encontrado.",
     };
   }
 
@@ -148,13 +156,25 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from("profiles")
     .select(
       "telegram_chat_id, enable_item_test_button, alert_offsets_days, alert_include_expired, alert_expired_max_days",
     )
     .eq("id", user.id)
     .maybeSingle();
+
+  if (!profile) {
+    const admin = createAdminSupabaseClient();
+    const { data: adminProfile } = await admin
+      .from("profiles")
+      .select(
+        "telegram_chat_id, enable_item_test_button, alert_offsets_days, alert_include_expired, alert_expired_max_days",
+      )
+      .eq("id", user.id)
+      .maybeSingle();
+    profile = adminProfile ?? null;
+  }
 
   const alertOffsets =
     profile?.alert_offsets_days && profile.alert_offsets_days.length > 0
@@ -207,7 +227,7 @@ export default async function SettingsPage() {
           </div>
           <SettingsForm
             action={updateTelegramAction}
-            chatId={profile?.telegram_chat_id ?? null}
+            initialTelegramChatId={profile?.telegram_chat_id ?? null}
           />
           <TestTelegramButton />
         </section>
