@@ -40,7 +40,7 @@ async function updateTelegramAction(
 
   if (error) {
     return {
-      error: `Nao foi possivel guardar o chat ID. ${error.message}`,
+      error: `Não foi possível guardar o chat ID. ${error.message}`,
     };
   }
 
@@ -74,7 +74,7 @@ export default async function SettingsPage() {
           ← Voltar aos itens
         </Link>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Definicoes
+          Definições
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Gere o teu chat ID do Telegram e confirma o email da conta.
@@ -90,7 +90,7 @@ export default async function SettingsPage() {
             {user.email}
           </p>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Este endereco e usado para iniciar sessao e recuperar a palavra-passe.
+            Este endereço é usado para iniciar sessão e recuperar a palavra-passe.
           </p>
         </section>
 
@@ -103,7 +103,7 @@ export default async function SettingsPage() {
               Guardar chat ID
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Sem o chat ID nao e possivel enviar os alertas diarios.
+              Sem o chat ID não é possível enviar os alertas diários.
             </p>
           </div>
           <SettingsForm
@@ -131,9 +131,9 @@ export default async function SettingsPage() {
             </a>{" "}
             e carrega em <strong>Start</strong>.
           </li>
-          <li>O bot devolve o chat ID. Copia o numero.</li>
+          <li>O bot devolve o chat ID. Copia o número.</li>
           <li>
-            Cola o numero no campo acima e guarda. Faz isto apenas uma vez por
+            Cola o número no campo acima e guarda. Faz isto apenas uma vez por
             conta.
           </li>
         </ol>

@@ -9,7 +9,7 @@ export async function POST() {
 
   if (!user) {
     return NextResponse.json(
-      { ok: false, error: "Sessao invalida. Faz login novamente." },
+      { ok: false, error: "Sessão inválida. Faz login novamente." },
       { status: 401 },
     );
   }
@@ -22,7 +22,7 @@ export async function POST() {
 
   if (error) {
     return NextResponse.json(
-      { ok: false, error: `Nao foi possivel carregar o chat ID. ${error.message}` },
+      { ok: false, error: `Não foi possível carregar o chat ID. ${error.message}` },
       { status: 500 },
     );
   }
@@ -52,7 +52,7 @@ export async function POST() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: "Teste de ligacao do Validade Alertas",
+        text: "Teste de ligação do Validade Alertas",
       }),
     },
   );
@@ -70,7 +70,7 @@ export async function POST() {
         ok: false,
         error:
           payload?.description ??
-          "Nao foi possivel enviar a mensagem pelo Telegram.",
+          "Não foi possível enviar a mensagem pelo Telegram.",
       },
       { status: 502 },
     );
