@@ -19,7 +19,10 @@ export const LOCATION_LABELS = LOCATIONS.reduce<Record<string, string>>(
 );
 
 export const STATUS_CLASSES: Record<string, string> = {
-  active: "bg-emerald-100 text-emerald-800",
-  consumed: "bg-blue-100 text-blue-800",
-  discarded: "bg-rose-100 text-rose-800",
+  active:
+    "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200",
+  consumed:
+    "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200",
+  discarded:
+    "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200",
 };

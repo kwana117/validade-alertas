@@ -81,29 +81,34 @@ export default async function AddPage({ searchParams }: Props) {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
-        <Link href="/items" className="text-sm text-slate-500 underline">
+        <Link
+          href="/items"
+          className="text-sm text-slate-500 underline dark:text-slate-400"
+        >
           ← Voltar aos itens
         </Link>
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Adicionar item
         </h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Escolhe o local e a data exata para receberes alertas no momento
           certo.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <AddItemForm action={addItemAction} defaultLocation={defaultLocation} />
       </div>
 
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-        <p className="font-semibold text-slate-900">Sugestões rápidas</p>
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+        <p className="font-semibold text-slate-900 dark:text-slate-100">
+          Sugestões rápidas
+        </p>
         <ul className="mt-3 list-disc space-y-1 pl-5">
           {LOCATIONS.map((loc) => (
             <li key={loc.value}>
               Usa{" "}
-              <code className="rounded bg-slate-100 px-2 py-1 text-xs">
+              <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-800 dark:bg-slate-800 dark:text-slate-100">
                 /add?loc={loc.value}
               </code>{" "}
               para pré-selecionar {LOCATION_LABELS[loc.value]}.

@@ -28,7 +28,9 @@ export function LoginForm({ action }: Props) {
   return (
     <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="email">Email</label>
+        <label htmlFor="email" className="text-slate-900 dark:text-slate-100">
+          Email
+        </label>
         <input
           id="email"
           name="email"
@@ -40,7 +42,12 @@ export function LoginForm({ action }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="password">Palavra-passe</label>
+        <label
+          htmlFor="password"
+          className="text-slate-900 dark:text-slate-100"
+        >
+          Palavra-passe
+        </label>
         <input
           id="password"
           name="password"
@@ -52,17 +59,17 @@ export function LoginForm({ action }: Props) {
       </div>
 
       {state.error ? (
-        <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-200">
           {state.error}
         </p>
       ) : null}
 
       <SubmitButton pending={isSubmitting}>Entrar</SubmitButton>
 
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-600 dark:text-slate-300">
         Ainda não tens conta?{" "}
         <Link
-          className="font-semibold text-slate-900 underline"
+          className="font-semibold text-slate-900 underline dark:text-slate-100"
           href="/signup"
         >
           Criar conta
@@ -84,7 +91,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-70"
+      className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-70 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
     >
       {pending ? "A entrar..." : children}
     </button>
