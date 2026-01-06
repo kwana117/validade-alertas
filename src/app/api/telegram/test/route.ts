@@ -22,7 +22,7 @@ export async function POST() {
 
   if (error) {
     return NextResponse.json(
-      { ok: false, error: "Nao foi possivel carregar o chat ID." },
+      { ok: false, error: `Nao foi possivel carregar o chat ID. ${error.message}` },
       { status: 500 },
     );
   }
