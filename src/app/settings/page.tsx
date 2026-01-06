@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SettingsState } from "./types";
 import { SettingsForm } from "./settings-form";
 import { TestTelegramButton } from "./test-telegram-button";
+import { ItemTestToggle } from "./item-test-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,42 @@ async function updateTelegramAction(
   return { success: "Chat ID atualizado com sucesso." };
 }
 
+async function updateItemTestToggle(
+  _prevState: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  "use server";
+
+  const enabled = formData.get("enable_item_test_button") === "on";
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ enable_item_test_button: enabled })
+    .eq("id", user.id);
+
+  if (error) {
+    return {
+      error: `Não foi possível atualizar a preferência. ${error.message}`,
+    };
+  }
+
+  revalidatePath("/settings");
+  return {
+    success: enabled
+      ? "Botões de teste ativados."
+      : "Botões de teste desativados.",
+  };
+}
+
 export default async function SettingsPage() {
   const supabase = await createServerSupabaseClient();
   const {
@@ -60,7 +97,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("telegram_chat_id")
+    .select("telegram_chat_id, enable_item_test_button")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -113,6 +150,11 @@ export default async function SettingsPage() {
           <TestTelegramButton />
         </section>
       </div>
+
+      <ItemTestToggle
+        enabled={profile?.enable_item_test_button ?? false}
+        action={updateItemTestToggle}
+      />
 
       <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">

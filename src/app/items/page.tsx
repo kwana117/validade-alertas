@@ -10,6 +10,7 @@ import {
   STATUS_LABELS,
 } from "@/lib/items";
 import { DeleteItemForm } from "@/app/items/delete-item-form";
+import { TestItemButton } from "@/app/items/test-item-button";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,14 @@ export default async function ItemsPage({ searchParams }: Props) {
   const resolvedSearchParams = await searchParams;
   const activeTab =
     resolvedSearchParams?.tab === "archived" ? "archived" : "active";
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("enable_item_test_button")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const enableItemTestButton = profile?.enable_item_test_button ?? false;
 
   const { data: items, error } = await supabase
     .from("items")
@@ -236,6 +245,9 @@ export default async function ItemsPage({ searchParams }: Props) {
                               Restaurar
                             </button>
                           </form>
+                          {enableItemTestButton ? (
+                            <TestItemButton itemId={item.id} />
+                          ) : null}
                           <DeleteItemForm
                             itemId={item.id}
                             action={deleteItemAction}
@@ -318,6 +330,9 @@ export default async function ItemsPage({ searchParams }: Props) {
                             Marcar descartado
                           </button>
                         </form>
+                        {enableItemTestButton ? (
+                          <TestItemButton itemId={item.id} />
+                        ) : null}
                         <DeleteItemForm itemId={item.id} action={deleteItemAction} />
                       </div>
                     </div>

@@ -5,8 +5,12 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   telegram_chat_id text,
+  enable_item_test_button boolean not null default false,
   created_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.profiles
+  add column if not exists enable_item_test_button boolean not null default false;
 
 -- Itens monitorizados
 create table if not exists public.items (
