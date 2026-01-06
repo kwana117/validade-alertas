@@ -1,10 +1,11 @@
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { differenceInCalendarDays } from "date-fns";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { LOCATION_LABELS } from "@/lib/items";
 
 export async function POST(request: Request) {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createRouteHandlerClient({ cookies });
   const {
     data: { user },
   } = await supabase.auth.getUser();
