@@ -172,7 +172,7 @@ export default async function SettingsPage() {
       .maybeSingle();
     
     if (alertData) {
-      profile = { ...profile, ...alertData };
+      profile = { ...profile, ...alertData } as typeof profile & typeof alertData;
     }
   }
 
@@ -191,16 +191,16 @@ export default async function SettingsPage() {
         .eq("id", user.id)
         .maybeSingle();
       
-      profile = { ...adminProfile, ...(adminAlertData ?? {}) };
+      profile = { ...adminProfile, ...(adminAlertData ?? {}) } as typeof adminProfile & typeof adminAlertData;
     }
   }
 
   const alertOffsets =
-    profile?.alert_offsets_days && profile.alert_offsets_days.length > 0
-      ? profile.alert_offsets_days
+    (profile as any)?.alert_offsets_days && Array.isArray((profile as any).alert_offsets_days) && (profile as any).alert_offsets_days.length > 0
+      ? (profile as any).alert_offsets_days
       : DEFAULT_OFFSETS;
-  const alertIncludeExpired = profile?.alert_include_expired ?? true;
-  const alertExpiredMaxDays = profile?.alert_expired_max_days ?? 7;
+  const alertIncludeExpired = (profile as any)?.alert_include_expired ?? true;
+  const alertExpiredMaxDays = (profile as any)?.alert_expired_max_days ?? 7;
 
   return (
     <div className="space-y-8">
