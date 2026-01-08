@@ -156,24 +156,43 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  let { data: profile } = await supabase
+  // First, try to load only columns that definitely exist
+  let { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select(
-      "telegram_chat_id, enable_item_test_button, alert_offsets_days, alert_include_expired, alert_expired_max_days",
-    )
+    .select("telegram_chat_id, enable_item_test_button")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile) {
+  // Try to load alert settings separately (they might not exist in old schemas)
+  if (profile && !profileError) {
+    const { data: alertData } = await supabase
+      .from("profiles")
+      .select("alert_offsets_days, alert_include_expired, alert_expired_max_days")
+      .eq("id", user.id)
+      .maybeSingle();
+    
+    if (alertData) {
+      profile = { ...profile, ...alertData };
+    }
+  }
+
+  if (!profile && !profileError) {
     const admin = createAdminSupabaseClient();
     const { data: adminProfile } = await admin
       .from("profiles")
-      .select(
-        "telegram_chat_id, enable_item_test_button, alert_offsets_days, alert_include_expired, alert_expired_max_days",
-      )
+      .select("telegram_chat_id, enable_item_test_button")
       .eq("id", user.id)
       .maybeSingle();
-    profile = adminProfile ?? null;
+    
+    if (adminProfile) {
+      const { data: adminAlertData } = await admin
+        .from("profiles")
+        .select("alert_offsets_days, alert_include_expired, alert_expired_max_days")
+        .eq("id", user.id)
+        .maybeSingle();
+      
+      profile = { ...adminProfile, ...(adminAlertData ?? {}) };
+    }
   }
 
   const alertOffsets =
@@ -227,7 +246,11 @@ export default async function SettingsPage() {
           </div>
           <SettingsForm
             action={updateTelegramAction}
-            initialTelegramChatId={profile?.telegram_chat_id ?? null}
+            initialTelegramChatId={
+              profile?.telegram_chat_id
+                ? String(profile.telegram_chat_id)
+                : null
+            }
           />
           <TestTelegramButton />
         </section>

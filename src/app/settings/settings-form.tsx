@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import type { SettingsState } from "./types";
 import { initialSettingsState } from "./types";
 
@@ -15,23 +15,13 @@ type Props = {
 export function SettingsForm({ action, initialTelegramChatId }: Props) {
   const [state, formAction] = useActionState(action, initialSettingsState);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [value, setValue] = useState(initialTelegramChatId ?? "");
-  const lastSyncedRef = useRef(initialTelegramChatId ?? "");
+  const initialValue = initialTelegramChatId ?? "";
+  const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
     const next = initialTelegramChatId ?? "";
-    if (value !== "" || next === lastSyncedRef.current) return;
     setValue(next);
-    lastSyncedRef.current = next;
-  }, [initialTelegramChatId, value]);
-
-  useEffect(() => {
-    if (!state.success) return;
-    const next = initialTelegramChatId ?? "";
-    if (!next || next === lastSyncedRef.current) return;
-    setValue(next);
-    lastSyncedRef.current = next;
-  }, [initialTelegramChatId, state.success]);
+  }, [initialTelegramChatId]);
 
   async function handleSubmit(formData: FormData) {
     setIsSubmitting(true);
@@ -52,11 +42,14 @@ export function SettingsForm({ action, initialTelegramChatId }: Props) {
           Chat ID do Telegram
         </label>
         <input
+          key={initialTelegramChatId ?? "empty"}
           id="telegram_chat_id"
           name="telegram_chat_id"
+          type="text"
           placeholder="Ex: 123456789"
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-600 dark:focus:ring-slate-600"
         />
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Abre o bot e escreve qualquer coisa para poderes copiar o chat ID.
