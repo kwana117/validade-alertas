@@ -292,6 +292,10 @@ export default async function SettingsPage() {
           </li>
         </ol>
       </section>
+
+      <footer className="text-center text-sm text-slate-500 dark:text-slate-400">
+        {new Date().getFullYear()} @ Digital Impact
+      </footer>
     </div>
   );
 }
