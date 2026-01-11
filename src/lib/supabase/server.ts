@@ -13,20 +13,25 @@ function getEnvVar(name: string) {
 export async function createServerSupabaseClient(): Promise<SupabaseClient> {
   const cookieStore = await cookies();
 
-  return createServerClient(
-    getEnvVar("NEXT_PUBLIC_SUPABASE_URL"),
-    getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
+  const url = getEnvVar("NEXT_PUBLIC_SUPABASE_URL");
+  const key = getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+
+  return createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
-        },
+        } catch (error) {
+          // Cookies can only be modified in Server Actions or Route Handlers
+          // During Server Component render, we silently ignore cookie updates
+          // They will be handled properly in Server Actions/Route Handlers
+        }
       },
     },
-  );
+  });
 }
