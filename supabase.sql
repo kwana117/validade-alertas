@@ -84,3 +84,52 @@ on public.items
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
+
+-- =============================================
+-- PRODUTOS FREQUENTES
+-- =============================================
+
+-- Tabela de produtos frequentes
+create table if not exists public.frequent_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  input_mode text not null check (input_mode in ('date', 'duration')),
+  default_duration_days int null,
+  allowed_locations text[] not null default array['fridge', 'freezer', 'pantry'],
+  usage_count int not null default 0,
+  last_used_at timestamptz null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  unique(user_id, name)
+);
+
+-- Indexes para melhorar performance
+create index if not exists idx_frequent_items_user_id on public.frequent_items(user_id);
+create index if not exists idx_frequent_items_usage on public.frequent_items(user_id, usage_count desc);
+
+-- RLS para frequent_items
+alter table public.frequent_items enable row level security;
+
+create policy "Users can view own frequent items"
+on public.frequent_items for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert own frequent items"
+on public.frequent_items for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can update own frequent items"
+on public.frequent_items for update
+using (auth.uid() = user_id);
+
+create policy "Users can delete own frequent items"
+on public.frequent_items for delete
+using (auth.uid() = user_id);
+
+-- Trigger para updated_at nos frequent_items
+drop trigger if exists trg_frequent_items_updated_at on public.frequent_items;
+create trigger trg_frequent_items_updated_at
+before update on public.frequent_items
+for each row
+execute function public.set_updated_at();

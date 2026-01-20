@@ -8,6 +8,7 @@ import { SettingsForm } from "./settings-form";
 import { TestTelegramButton } from "./test-telegram-button";
 import { ItemTestToggle } from "./item-test-toggle";
 import { AlertSettingsForm } from "./alert-settings-form";
+import { FrequentItemsSection } from "./frequent-items-section";
 
 export const dynamic = "force-dynamic";
 
@@ -267,6 +268,8 @@ export default async function SettingsPage() {
         enabled={profile?.enable_item_test_button ?? false}
         action={updateItemTestToggle}
       />
+
+      <FrequentItemsSection />
 
       <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
