@@ -1,0 +1,157 @@
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148190999,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148191000,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148191003,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":0},"timestamp":1768148191100,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148191101,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148191101,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148191101,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148191101,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148191101,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148191123,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":0},"timestamp":1768148191123,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148191123,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148191123,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148191123,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148191123,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148191123,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148191126,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148191126,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":false},"timestamp":1768148191139,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148195718,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":0},"timestamp":1768148195721,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148195721,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148195721,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148195721,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148195721,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148195721,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148195722,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148196486,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148196487,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148196488,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148196494,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148196495,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148196495,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148196495,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148196495,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148196495,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148196496,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148196496,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148196496,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148196496,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148196496,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148196496,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148196496,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148196497,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148196497,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148196502,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148197926,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148197928,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148197928,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148197928,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148197928,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148197928,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148197928,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148197928,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148197959,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148197959,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"page.tsx:6","message":"Home entry","data":{},"timestamp":1768148197960,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148197960,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":0},"timestamp":1768148197971,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148197971,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148197971,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148197971,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148197971,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148197971,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148197972,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":0},"timestamp":1768148197972,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148197972,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148197972,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148197973,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148197973,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148197973,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148197974,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148197974,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"page.tsx:10","message":"supabase client created in page","data":{},"timestamp":1768148197974,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":false},"timestamp":1768148197979,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"page.tsx:15","message":"session checked in page","data":{"hasSession":false,"redirectTarget":"/login"},"timestamp":1768148197979,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"page.tsx:21","message":"Home error","data":{"errorMessage":"NEXT_REDIRECT","errorName":"Error","errorStack":"Error: NEXT_REDIRECT\n    at getRedirectError (/Users/joaogoncalodias/validade-alertas/.next/dev/server/chunks/ssr/b0b01_d4c86345._.js:188:41)\n    at redirect (/Users/joaogoncalodias/validade-alertas/.next/dev/server/chunks/ssr/b0b01_d4c86345._.js:198:11)\n    at Home (/Users/joaogoncalodias/validade-alertas/.next/dev/server/chunks/ssr/[root-of-the-server]__501c16a9._.js:79:230)\n    at runNextTicks (node:internal/process/task_queues:60:5)\n    at listOnTimeout (node:internal/timers:545:9)\n    at process.processTimers (node:internal/timers:519:7)"},"timestamp":1768148197979,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148198166,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148198166,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148198167,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148198172,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148198172,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148198172,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148198172,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148198172,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148198172,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148198173,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148198174,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148198174,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148198174,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148198174,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148198174,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148198174,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148198175,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148198175,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148198180,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148199924,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148199931,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148199932,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148199932,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148199932,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148199932,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148199932,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148199934,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148201900,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148201901,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148201901,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":0},"timestamp":1768148201912,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148201912,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148201912,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148201912,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148201912,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148201913,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148201914,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":0},"timestamp":1768148201914,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148201914,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148201914,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148201914,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148201914,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148201915,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148201916,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148201916,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":false},"timestamp":1768148201920,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148201988,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148201994,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148201994,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148201994,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148201994,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148201994,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148201995,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148201996,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:23","message":"createServerSupabaseClient entry","data":{},"timestamp":1768148213272,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:27","message":"cookies obtained","data":{"cookieCount":1},"timestamp":1768148213278,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","hasValue":true},"timestamp":1768148213278,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_URL","valueLength":40},"timestamp":1768148213278,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:6","message":"getEnvVar called","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","hasValue":true},"timestamp":1768148213278,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:16","message":"getEnvVar success","data":{"name":"NEXT_PUBLIC_SUPABASE_ANON_KEY","valueLength":46},"timestamp":1768148213278,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:32","message":"env vars obtained","data":{"hasUrl":true,"hasKey":true},"timestamp":1768148213278,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"server.ts:49","message":"client created successfully","data":{},"timestamp":1768148213279,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148216302,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148216346,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148216354,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148216374,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148216385,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148216388,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148216405,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148216418,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148216425,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148228895,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148228955,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148228965,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148228992,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148228999,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148229004,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"layout.tsx:28","message":"RootLayout entry","data":{},"timestamp":1768148229018,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:31","message":"supabase client created in layout","data":{},"timestamp":1768148229025,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"layout.tsx:35","message":"session checked in layout","data":{"hasSession":true},"timestamp":1768148229030,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}

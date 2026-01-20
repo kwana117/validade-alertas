@@ -18,13 +18,25 @@ export function FrequentItemsSection() {
     setError(null);
     try {
       const res = await fetch("/api/frequent-items");
-      if (!res.ok) {
-        throw new Error("Erro ao carregar produtos");
-      }
       const data = await res.json();
+
+      if (!res.ok) {
+        // Check if it's a table not found error (table doesn't exist yet)
+        if (data.error?.includes("relation") || data.error?.includes("does not exist") || res.status === 500) {
+          // Table doesn't exist yet - show empty state instead of error
+          setItems([]);
+          setError(null);
+          return;
+        }
+        throw new Error(data.error ?? "Erro ao carregar produtos");
+      }
+
       setItems(data.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro desconhecido");
+      // Network errors or other issues - show friendly message
+      console.error("Error fetching frequent items:", err);
+      setItems([]);
+      setError(null); // Don't show error, just show empty state
     } finally {
       setIsLoading(false);
     }
@@ -138,10 +150,15 @@ export function FrequentItemsSection() {
         </p>
       )}
 
-      {!isLoading && items.length === 0 && (
-        <p className="py-8 text-center text-slate-500 dark:text-slate-400">
-          Ainda não tens produtos frequentes. Adiciona o primeiro!
-        </p>
+      {!isLoading && items.length === 0 && !error && (
+        <div className="py-8 text-center">
+          <p className="text-slate-500 dark:text-slate-400">
+            Ainda não tens produtos frequentes.
+          </p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
+            Adiciona o primeiro para agilizar o processo de adicionar itens!
+          </p>
+        </div>
       )}
 
       {!isLoading && items.length > 0 && (

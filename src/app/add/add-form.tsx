@@ -73,9 +73,9 @@ export function AddItemForm({ action, defaultLocation }: Props) {
   return (
     <form action={handleSubmit} className="space-y-6">
       {/* Quick location buttons */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Localização rápida
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          Localização
         </label>
         <div className="flex flex-wrap gap-2">
           {LOCATIONS.map((loc) => (
@@ -98,11 +98,14 @@ export function AddItemForm({ action, defaultLocation }: Props) {
         </div>
       </div>
 
+      {/* Hidden input for form submission */}
+      <input type="hidden" name="location" value={selectedLocation} />
+
       <hr className="border-slate-200 dark:border-slate-700" />
 
       {/* Product name with autocomplete */}
-      <div className="space-y-2">
-        <label htmlFor="name" className="text-slate-900 dark:text-slate-100">
+      <div className="space-y-3">
+        <label htmlFor="name" className="block font-medium text-slate-900 dark:text-slate-100">
           Nome do produto
         </label>
         <ProductAutocomplete
@@ -116,8 +119,8 @@ export function AddItemForm({ action, defaultLocation }: Props) {
       <hr className="border-slate-200 dark:border-slate-700" />
 
       {/* Validity input with mode toggle */}
-      <div className="space-y-2">
-        <label className="text-slate-900 dark:text-slate-100">Validade</label>
+      <div className="space-y-3">
+        <label className="block font-medium text-slate-900 dark:text-slate-100">Validade</label>
         <ValidityInput
           mode={inputMode}
           onModeChange={setInputMode}
@@ -126,31 +129,6 @@ export function AddItemForm({ action, defaultLocation }: Props) {
           specificDate={specificDate}
           onDateChange={setSpecificDate}
         />
-      </div>
-
-      <hr className="border-slate-200 dark:border-slate-700" />
-
-      {/* Location dropdown (hidden but synced with quick buttons) */}
-      <div className="space-y-2">
-        <label
-          htmlFor="location"
-          className="text-slate-900 dark:text-slate-100"
-        >
-          Local
-        </label>
-        <select
-          id="location"
-          name="location"
-          value={selectedLocation}
-          onChange={(e) => handleLocationChange(e.target.value as LocationType)}
-          required
-        >
-          {LOCATIONS.map((location) => (
-            <option key={location.value} value={location.value}>
-              {location.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       {state.error ? (

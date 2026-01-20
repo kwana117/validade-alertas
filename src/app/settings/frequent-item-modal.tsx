@@ -37,7 +37,7 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
   const handleLocationToggle = (loc: LocationType) => {
     setAllowedLocations((prev) => {
       if (prev.includes(loc)) {
-        if (prev.length === 1) return prev; // Keep at least one
+        if (prev.length === 1) return prev;
         return prev.filter((l) => l !== loc);
       }
       return [...prev, loc];
@@ -79,6 +79,7 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
             {editingItem ? "Editar Produto" : "Novo Produto Frequente"}
@@ -86,19 +87,19 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
           <div className="space-y-2">
-            <label htmlFor="freq-name" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Nome *
+            <label htmlFor="freq-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Nome
             </label>
             <input
               id="freq-name"
@@ -110,44 +111,49 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
             />
           </div>
 
-          {/* Input Mode */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Modo de Input *
+          {/* Input Mode - Segmented Control */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Modo de validade
             </label>
-            <div className="space-y-2">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  checked={inputMode === "duration"}
-                  onChange={() => setInputMode("duration")}
-                  className="h-4 w-4"
-                />
-                <span className="text-slate-900 dark:text-slate-100">
-                  Dura X dias <span className="text-sm text-slate-500">(produtos caseiros)</span>
-                </span>
-              </label>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  checked={inputMode === "date"}
-                  onChange={() => setInputMode("date")}
-                  className="h-4 w-4"
-                />
-                <span className="text-slate-900 dark:text-slate-100">
-                  Data específica <span className="text-sm text-slate-500">(produtos comprados)</span>
-                </span>
-              </label>
+            <div className="inline-flex w-full rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button
+                type="button"
+                onClick={() => setInputMode("duration")}
+                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  inputMode === "duration"
+                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                }`}
+              >
+                Dura X dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode("date")}
+                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  inputMode === "date"
+                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                }`}
+              >
+                Data específica
+              </button>
             </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {inputMode === "duration"
+                ? "Para produtos caseiros com validade previsível"
+                : "Para produtos comprados com data na embalagem"}
+            </p>
           </div>
 
           {/* Duration Days (only for duration mode) */}
           {inputMode === "duration" && (
             <div className="space-y-2">
-              <label htmlFor="freq-duration" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Duração Padrão *
+              <label htmlFor="freq-duration" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Duração padrão
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <input
                   id="freq-duration"
                   type="number"
@@ -155,7 +161,7 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
                   max="365"
                   value={durationDays}
                   onChange={(e) => setDurationDays(parseInt(e.target.value, 10) || 1)}
-                  className="w-20"
+                  className="w-24 text-center"
                 />
                 <span className="text-slate-700 dark:text-slate-300">dias</span>
               </div>
@@ -163,43 +169,53 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
           )}
 
           {/* Allowed Locations */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Localizações Permitidas *
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Localizações permitidas
             </label>
-            <div className="space-y-2">
-              {LOCATIONS.map((loc) => (
-                <label key={loc.value} className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={allowedLocations.includes(loc.value as LocationType)}
-                    onChange={() => handleLocationToggle(loc.value as LocationType)}
-                    className="h-4 w-4 rounded"
-                  />
-                  <span className="text-slate-900 dark:text-slate-100">{loc.label}</span>
-                </label>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              {LOCATIONS.map((loc) => {
+                const isSelected = allowedLocations.includes(loc.value as LocationType);
+                return (
+                  <button
+                    key={loc.value}
+                    type="button"
+                    onClick={() => handleLocationToggle(loc.value as LocationType)}
+                    className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                      isSelected
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-300"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-500"
+                    }`}
+                  >
+                    {loc.value === "fridge" && "🧊 "}
+                    {loc.value === "freezer" && "❄️ "}
+                    {loc.value === "pantry" && "🏠 "}
+                    {loc.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {error && (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-200">
+            <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
               {error}
-            </p>
+            </div>
           )}
 
+          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-800 disabled:opacity-70 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+              className="flex-1 rounded-xl bg-slate-900 px-4 py-2.5 font-semibold text-white transition hover:bg-slate-800 disabled:opacity-70 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
             >
               {isSubmitting ? "A guardar..." : "Guardar"}
             </button>
