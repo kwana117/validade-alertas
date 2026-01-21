@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { LOCATIONS, STATUS_CLASSES, STATUS_LABELS, formatLocationLabel } from "@/lib/items";
 import { DeleteItemForm } from "@/app/items/delete-item-form";
 import { EditItemName } from "@/app/items/edit-item-name";
+import { LocationFilterChips } from "@/app/items/location-filters";
 import { TestItemButton } from "@/app/items/test-item-button";
 
 export const dynamic = "force-dynamic";
@@ -228,36 +229,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                 Arquivados ({archivedItems.length})
               </Link>
             </div>
-            {activeTab === "active" ? (
-              <div className="flex flex-wrap gap-2 text-sm">
-                <Link
-                  href="/items"
-                  className={`rounded-full border px-4 py-1.5 font-medium transition ${
-                    locationFilter
-                      ? "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-800"
-                      : "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                  }`}
-                >
-                  Todos
-                </Link>
-                {LOCATIONS.map((location) => {
-                  const isSelected = locationFilter === location.value;
-                  return (
-                    <Link
-                      key={location.value}
-                      href={`/items?loc=${location.value}`}
-                      className={`rounded-full border px-4 py-1.5 font-medium transition ${
-                        isSelected
-                          ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      {formatLocationLabel(location.value)}
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : null}
+            <LocationFilterChips activeTab={activeTab} />
             {activeTab === "active" && locationFilter ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 A mostrar {filteredActiveItems.length} de {activeItems.length} itens
