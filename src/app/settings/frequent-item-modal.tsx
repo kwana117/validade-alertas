@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { FrequentItem, FrequentItemInput, InputMode, LocationType } from "@/lib/frequent-items";
-import { LOCATIONS } from "@/lib/items";
+import { LOCATIONS, formatLocationLabel } from "@/lib/items";
 
 interface Props {
   isOpen: boolean;
@@ -187,10 +187,7 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
                         : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-500"
                     }`}
                   >
-                    {loc.value === "fridge" && "🧊 "}
-                    {loc.value === "freezer" && "❄️ "}
-                    {loc.value === "pantry" && "🏠 "}
-                    {loc.label}
+                    {formatLocationLabel(loc.value)}
                   </button>
                 );
               })}

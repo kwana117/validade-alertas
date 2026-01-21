@@ -3,13 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import {
-  LOCATION_LABELS,
-  LOCATIONS,
-  STATUS_CLASSES,
-  STATUS_LABELS,
-} from "@/lib/items";
+import { LOCATIONS, STATUS_CLASSES, STATUS_LABELS, formatLocationLabel } from "@/lib/items";
 import { DeleteItemForm } from "@/app/items/delete-item-form";
+import { EditItemName } from "@/app/items/edit-item-name";
 import { TestItemButton } from "@/app/items/test-item-button";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +74,33 @@ async function deleteItemAction(formData: FormData) {
     .delete()
     .eq("id", itemId)
     .eq("user_id", user.id);
+
+  revalidatePath("/items");
+}
+
+async function updateItemName(formData: FormData) {
+  "use server";
+
+  const itemId = formData.get("itemId")?.toString();
+  const name = formData.get("name")?.toString().trim();
+
+  if (!itemId || !name) return;
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  await supabase
+    .from("items")
+    .update({ name })
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .eq("status", "active");
 
   revalidatePath("/items");
 }
@@ -161,7 +184,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                 className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 href={`/add?loc=${location.value}`}
               >
-                + {location.label}
+                + {formatLocationLabel(location.value)}
               </Link>
             ))}
           </div>
@@ -229,7 +252,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-800"
                       }`}
                     >
-                      {location.label}
+                      {formatLocationLabel(location.value)}
                     </Link>
                   );
                 })}
@@ -238,7 +261,7 @@ export default async function ItemsPage({ searchParams }: Props) {
             {activeTab === "active" && locationFilter ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 A mostrar {filteredActiveItems.length} de {activeItems.length} itens
-                ativos em {LOCATION_LABELS[locationFilter] ?? "Local"}.
+                ativos em {formatLocationLabel(locationFilter)}.
               </p>
             ) : null}
           </header>
@@ -258,7 +281,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          {LOCATION_LABELS[item.location] ?? "Local"}
+                          {formatLocationLabel(item.location)}
                         </p>
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                           {item.name}
@@ -306,9 +329,7 @@ export default async function ItemsPage({ searchParams }: Props) {
           ) : filteredActiveItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
               {locationFilter
-                ? `Nenhum item ativo em ${
-                    LOCATION_LABELS[locationFilter] ?? "Local"
-                  }.`
+                ? `Nenhum item ativo em ${formatLocationLabel(locationFilter)}.`
                 : "Nenhum item ativo neste momento."}
             </div>
           ) : (
@@ -321,11 +342,13 @@ export default async function ItemsPage({ searchParams }: Props) {
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        {LOCATION_LABELS[item.location] ?? "Local"}
+                        {formatLocationLabel(item.location)}
                       </p>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        {item.name}
-                      </h3>
+                      <EditItemName
+                        itemId={item.id}
+                        name={item.name}
+                        action={updateItemName}
+                      />
                       <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         <p>
                           Validade: {DATE_FORMATTER.format(new Date(item.expires_at))}

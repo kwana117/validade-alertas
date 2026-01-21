@@ -2,7 +2,7 @@
 
 import type { FrequentItem } from "@/lib/frequent-items";
 import { INPUT_MODE_LABELS } from "@/lib/frequent-items";
-import { LOCATION_LABELS } from "@/lib/items";
+import { formatLocationLabel } from "@/lib/items";
 
 interface Props {
   item: FrequentItem;
@@ -12,7 +12,7 @@ interface Props {
 
 export function FrequentItemCard({ item, onEdit, onDelete }: Props) {
   const locationLabels = item.allowed_locations
-    .map((loc) => LOCATION_LABELS[loc])
+    .map((loc) => formatLocationLabel(loc))
     .join(", ");
 
   return (

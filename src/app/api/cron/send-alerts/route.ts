@@ -1,7 +1,7 @@
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { LOCATION_LABELS } from "@/lib/items";
+import { formatLocationLabel } from "@/lib/items";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("pt-PT", {
   day: "2-digit",
@@ -171,7 +171,7 @@ async function handleCron() {
         const lines = itemsForOffset
           .map(
             (item) =>
-              `- ${item.name} (${LOCATION_LABELS[item.location] ?? item.location}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`,
+              `- ${item.name} (${formatLocationLabel(item.location)}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`,
           )
           .join("\n");
         return `${offsetLabel(offset)}:\n${lines}`;
@@ -182,7 +182,7 @@ async function handleCron() {
       const lines = info.expired
         .map(
           (item) =>
-            `- ${item.name} (${LOCATION_LABELS[item.location] ?? item.location}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`,
+            `- ${item.name} (${formatLocationLabel(item.location)}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`,
         )
         .join("\n");
       sections.push(`Já expiraram:\n${lines}`);
@@ -194,7 +194,7 @@ async function handleCron() {
     }
 
     const text =
-      "🧊 Validades a acompanhar:\n\n" +
+      "🥩 Validades a acompanhar:\n\n" +
       sections.join("\n\n") +
       "\n\nMantém a lista atualizada para evitar desperdício.";
 

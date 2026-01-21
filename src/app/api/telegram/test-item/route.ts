@@ -1,7 +1,7 @@
 import { differenceInCalendarDays } from "date-fns";
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { LOCATION_LABELS } from "@/lib/items";
+import { formatLocationLabel } from "@/lib/items";
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   today.setHours(0, 0, 0, 0);
   const expiry = new Date(item.expires_at);
   const diff = differenceInCalendarDays(expiry, today);
-  const locationLabel = LOCATION_LABELS[item.location] ?? item.location;
+  const locationLabel = formatLocationLabel(item.location);
 
   let message = "";
 

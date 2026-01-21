@@ -45,6 +45,19 @@ textarea {
   color: var(--foreground);
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.1);
+  opacity: 0.9;
+}
+
+.dark input[type="date"] {
+  color-scheme: dark;
+}
+
 label {
   font-weight: 500;
   font-size: 0.95rem;

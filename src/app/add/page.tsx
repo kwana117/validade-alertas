@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { AddItemState } from "./types";
 import { AddItemForm } from "./add-form";
-import { LOCATIONS, LOCATION_LABELS } from "@/lib/items";
+import { LOCATIONS, formatLocationLabel } from "@/lib/items";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -111,7 +111,7 @@ export default async function AddPage({ searchParams }: Props) {
               <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-800 dark:bg-slate-800 dark:text-slate-100">
                 /add?loc={loc.value}
               </code>{" "}
-              para pré-selecionar {LOCATION_LABELS[loc.value]}.
+              para pré-selecionar {formatLocationLabel(loc.value)}.
             </li>
           ))}
         </ul>

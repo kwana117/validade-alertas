@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useActionState, useState, useCallback } from "react";
 import type { AddItemState } from "./types";
 import { initialAddItemState } from "./types";
-import { LOCATIONS } from "@/lib/items";
+import { LOCATIONS, formatLocationLabel } from "@/lib/items";
 import { ProductAutocomplete } from "./product-autocomplete";
 import { ValidityInput } from "./validity-input";
 import type { InputMode, LocationType, ProductSuggestion } from "@/lib/frequent-items";
@@ -89,10 +89,7 @@ export function AddItemForm({ action, defaultLocation }: Props) {
                   : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               }`}
             >
-              {loc.value === "fridge" && "🧊 "}
-              {loc.value === "freezer" && "❄️ "}
-              {loc.value === "pantry" && "🏠 "}
-              {loc.label}
+              {formatLocationLabel(loc.value)}
             </button>
           ))}
         </div>

@@ -18,6 +18,18 @@ export const LOCATION_LABELS = LOCATIONS.reduce<Record<string, string>>(
   {},
 );
 
+export const LOCATION_EMOJIS: Record<string, string> = {
+  fridge: "🥩",
+  freezer: "❄️",
+  pantry: "🏠",
+};
+
+export function formatLocationLabel(location: string) {
+  const label = LOCATION_LABELS[location] ?? location;
+  const emoji = LOCATION_EMOJIS[location];
+  return emoji ? `${emoji} ${label}` : label;
+}
+
 export const STATUS_CLASSES: Record<string, string> = {
   active:
     "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200",
