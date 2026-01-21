@@ -7,6 +7,7 @@ import { LOCATIONS, STATUS_CLASSES, STATUS_LABELS, formatLocationLabel } from "@
 import { DeleteItemForm } from "@/app/items/delete-item-form";
 import { EditItemName } from "@/app/items/edit-item-name";
 import { LocationFilterChips } from "@/app/items/location-filters";
+import { StickyFilterBar } from "@/app/items/sticky-filter-bar";
 import { TestItemButton } from "@/app/items/test-item-button";
 
 export const dynamic = "force-dynamic";
@@ -229,7 +230,6 @@ export default async function ItemsPage({ searchParams }: Props) {
                 Arquivados ({archivedItems.length})
               </Link>
             </div>
-            <LocationFilterChips activeTab={activeTab} />
             {activeTab === "active" && locationFilter ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 A mostrar {filteredActiveItems.length} de {activeItems.length} itens
@@ -237,6 +237,9 @@ export default async function ItemsPage({ searchParams }: Props) {
               </p>
             ) : null}
           </header>
+          <StickyFilterBar>
+            <LocationFilterChips activeTab={activeTab} />
+          </StickyFilterBar>
 
           {activeTab === "archived" ? (
             archivedItems.length === 0 ? (
