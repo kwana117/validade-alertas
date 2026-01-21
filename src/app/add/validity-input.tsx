@@ -130,6 +130,7 @@ export function ValidityInput({
           min={today}
           max={maxDate}
           required={mode === "date"}
+          className="w-full min-w-0 max-w-full"
         />
       )}
 

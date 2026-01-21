@@ -85,6 +85,7 @@ async function deleteItemAction(formData: FormData) {
 type Props = {
   searchParams?: Promise<{
     tab?: string;
+    loc?: string;
   }>;
 };
 
@@ -101,6 +102,10 @@ export default async function ItemsPage({ searchParams }: Props) {
   const resolvedSearchParams = await searchParams;
   const activeTab =
     resolvedSearchParams?.tab === "archived" ? "archived" : "active";
+  const locationParam = resolvedSearchParams?.loc;
+  const locationFilter = LOCATIONS.some((loc) => loc.value === locationParam)
+    ? locationParam
+    : "";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -122,6 +127,9 @@ export default async function ItemsPage({ searchParams }: Props) {
 
   const itemsList = (items as PantryItem[] | null) ?? [];
   const activeItems = itemsList.filter((item) => item.status === "active");
+  const filteredActiveItems = locationFilter
+    ? activeItems.filter((item) => item.location === locationFilter)
+    : activeItems;
   const archivedItems = itemsList
     .filter((item) => item.status !== "active")
     .slice()
@@ -177,7 +185,7 @@ export default async function ItemsPage({ searchParams }: Props) {
             </div>
             <div className="flex w-full flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-white p-1 text-sm font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
               <Link
-                href="/items"
+                href={locationFilter ? `/items?loc=${locationFilter}` : "/items"}
                 className={`rounded-full px-4 py-2 transition ${
                   activeTab === "active"
                     ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
@@ -197,6 +205,42 @@ export default async function ItemsPage({ searchParams }: Props) {
                 Arquivados ({archivedItems.length})
               </Link>
             </div>
+            {activeTab === "active" ? (
+              <div className="flex flex-wrap gap-2 text-sm">
+                <Link
+                  href="/items"
+                  className={`rounded-full border px-4 py-1.5 font-medium transition ${
+                    locationFilter
+                      ? "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+                      : "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                  }`}
+                >
+                  Todos
+                </Link>
+                {LOCATIONS.map((location) => {
+                  const isSelected = locationFilter === location.value;
+                  return (
+                    <Link
+                      key={location.value}
+                      href={`/items?loc=${location.value}`}
+                      className={`rounded-full border px-4 py-1.5 font-medium transition ${
+                        isSelected
+                          ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      {location.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+            {activeTab === "active" && locationFilter ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                A mostrar {filteredActiveItems.length} de {activeItems.length} itens
+                ativos em {LOCATION_LABELS[locationFilter] ?? "Local"}.
+              </p>
+            ) : null}
           </header>
 
           {activeTab === "archived" ? (
@@ -227,7 +271,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                       </div>
                       <div className="flex flex-col gap-3 md:items-end">
                         <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                          className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold ${
                             STATUS_CLASSES[item.status] ??
                             "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200"
                           }`}
@@ -259,13 +303,17 @@ export default async function ItemsPage({ searchParams }: Props) {
                 ))}
               </div>
             )
-          ) : activeItems.length === 0 ? (
+          ) : filteredActiveItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-              Nenhum item ativo neste momento.
+              {locationFilter
+                ? `Nenhum item ativo em ${
+                    LOCATION_LABELS[locationFilter] ?? "Local"
+                  }.`
+                : "Nenhum item ativo neste momento."}
             </div>
           ) : (
             <div className="space-y-4">
-              {activeItems.map((item) => (
+              {filteredActiveItems.map((item) => (
                 <article
                   key={item.id}
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
@@ -289,7 +337,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                     </div>
                     <div className="flex flex-col gap-3 md:items-end">
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                        className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold ${
                           STATUS_CLASSES[item.status] ??
                           "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200"
                         }`}
