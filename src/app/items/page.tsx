@@ -206,7 +206,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                 Recebes alertas aos 3 dias, 1 dia, no próprio dia e após expirar.
               </p>
             </div>
-            <div className="flex w-full flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-white p-1 text-sm font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+            <div className="inline-flex w-fit flex-wrap items-center gap-2 self-start rounded-full border border-slate-200 bg-white text-sm font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
               <Link
                 href={locationFilter ? `/items?loc=${locationFilter}` : "/items"}
                 className={`rounded-full px-4 py-2 transition ${
