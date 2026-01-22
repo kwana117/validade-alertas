@@ -29,8 +29,14 @@ function offsetLabel(offset: number) {
 }
 
 async function handleCron(forceUserId: string | null = null) {
+  const startTime = Date.now();
+  const timestamp = new Date().toISOString();
+  
+  console.log(`[CRON] Starting handleCron at ${timestamp}`, { forceUserId });
+  
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
+    console.error(`[CRON] TELEGRAM_BOT_TOKEN não está definido`);
     return NextResponse.json(
       { error: "TELEGRAM_BOT_TOKEN não está definido." },
       { status: 500 },
@@ -38,11 +44,27 @@ async function handleCron(forceUserId: string | null = null) {
   }
 
   const supabase = createAdminSupabaseClient();
+  
+  // Informações do ambiente do servidor
+  const serverEnvironment = {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    locale: Intl.DateTimeFormat().resolvedOptions().locale,
+    nodeVersion: process.version,
+    environment: process.env.NODE_ENV || "unknown",
+    timestamp,
+  };
+  
+  console.log(`[CRON] Server environment:`, serverEnvironment);
 
   // Obter a hora atual em formato HH:MM (Lisboa timezone)
   const now = new Date();
   let currentTime = "00:00";
-  let debugInfo: any = {};
+  let debugInfo: any = {
+    serverEnvironment,
+    executionStart: startTime,
+  };
+  
+  console.log(`[CRON] Calculating Lisbon time from UTC: ${now.toISOString()}`);
   
   try {
     // Método 1: Usar Intl.DateTimeFormat com formatToParts
@@ -88,13 +110,19 @@ async function handleCron(forceUserId: string | null = null) {
     }
     
     debugInfo.finalTime = currentTime;
+    console.log(`[CRON] Lisbon time calculated: ${currentTime}`, debugInfo);
   } catch (error) {
-    debugInfo.error = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error(`[CRON] Error calculating time:`, errorMessage, errorStack);
+    debugInfo.error = errorMessage;
+    debugInfo.errorStack = errorStack;
     // Fallback final: usar hora local (não ideal, mas melhor que nada)
     const localHours = now.getHours().toString().padStart(2, "0");
     const localMinutes = now.getMinutes().toString().padStart(2, "0");
     currentTime = `${localHours}:${localMinutes}`;
     debugInfo.fallback = currentTime;
+    console.warn(`[CRON] Using fallback local time: ${currentTime}`);
   }
   
   // Formatter para debug (sempre disponível)
@@ -114,21 +142,49 @@ async function handleCron(forceUserId: string | null = null) {
     .not("telegram_chat_id", "is", null);
 
   if (forceUserId) {
+    console.log(`[CRON] Querying for specific user: ${forceUserId}`);
     query = query.eq("id", forceUserId);
+    debugInfo.queryDetails = {
+      queryType: "force_user",
+      userId: forceUserId,
+    };
   } else {
+    console.log(`[CRON] Querying for alert_time: ${currentTime}`);
     query = query.eq("alert_time", currentTime);
+    debugInfo.queryDetails = {
+      queryType: "time_match",
+      alertTime: currentTime,
+    };
   }
 
+  const queryStartTime = Date.now();
   const { data: profiles, error: profilesError } = await query;
+  const queryTime = Date.now() - queryStartTime;
+  
+  debugInfo.queryDetails = {
+    ...debugInfo.queryDetails,
+    queryTime: `${queryTime}ms`,
+    profilesFound: profiles?.length || 0,
+  };
 
   if (profilesError) {
-    return NextResponse.json({ error: profilesError.message }, { status: 500 });
+    console.error(`[CRON] Database error:`, profilesError);
+    return NextResponse.json({ 
+      error: profilesError.message,
+      debug: {
+        ...debugInfo,
+        queryError: profilesError,
+      }
+    }, { status: 500 });
   }
+  
+  console.log(`[CRON] Found ${profiles?.length || 0} profiles matching criteria`);
 
   const profileRows = (profiles ?? []).filter((profile) => profile.id);
 
   if (profileRows.length === 0) {
     // Debug: buscar todos os alert_times para ver o que está na BD
+    console.log(`[CRON] No profiles found, fetching all alert times for debug`);
     const { data: allProfiles } = await supabase
       .from("profiles")
       .select("id, alert_time, telegram_chat_id")
@@ -139,6 +195,21 @@ async function handleCron(forceUserId: string | null = null) {
       alertTime: p.alert_time,
       matches: p.alert_time === currentTime
     }));
+    
+    const executionTime = Date.now() - startTime;
+    debugInfo.executionTime = `${executionTime}ms`;
+    debugInfo.queryDetails = {
+      ...debugInfo.queryDetails,
+      allAlertTimes: alertTimes.map(p => p.alertTime),
+      matches: alertTimes.some(p => p.matches),
+    };
+    
+    console.log(`[CRON] Debug info:`, {
+      currentTime,
+      alertTimes: alertTimes.map(p => p.alertTime),
+      matches: alertTimes.filter(p => p.matches).length,
+      executionTime,
+    });
     
     return NextResponse.json({
       currentTime,
@@ -152,7 +223,10 @@ async function handleCron(forceUserId: string | null = null) {
         lisbonTimeString: formatter.format(now),
         allProfiles: alertTimes,
         comparison: alertTimes.map(p => `${p.alertTime} === ${currentTime}? ${p.matches}`),
-        timeCalculation: debugInfo
+        timeCalculation: debugInfo,
+        serverEnvironment,
+        queryDetails: debugInfo.queryDetails,
+        executionTime: debugInfo.executionTime,
       },
       message: forceUserId
         ? "Utilizador não encontrado ou sem chat ID configurado."
@@ -329,6 +403,19 @@ async function handleCron(forceUserId: string | null = null) {
     results.push({ userId, sent: true });
   }
 
+  const executionTime = Date.now() - startTime;
+  debugInfo.executionTime = `${executionTime}ms`;
+  debugInfo.queryDetails = {
+    ...debugInfo.queryDetails,
+    matchedProfiles: profileRows.map(p => ({ userId: p.id, alertTime: p.alert_time })),
+  };
+  
+  console.log(`[CRON] Completed in ${executionTime}ms`, {
+    processedUsers: grouped.size,
+    sent: results.filter((r) => r.sent).length,
+    errors: results.filter((r) => !r.sent).length,
+  });
+  
   return NextResponse.json({
     currentTime,
     forceUserId: forceUserId ?? null,
@@ -340,7 +427,10 @@ async function handleCron(forceUserId: string | null = null) {
       utcTime: now.toISOString(),
       lisbonTimeString: formatter.format(now),
       matchedProfiles: profileRows.map(p => ({ userId: p.id, alertTime: p.alert_time })),
-      timeCalculation: debugInfo
+      timeCalculation: debugInfo,
+      serverEnvironment,
+      queryDetails: debugInfo.queryDetails,
+      executionTime: debugInfo.executionTime,
     }
   });
 }

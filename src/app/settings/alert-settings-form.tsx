@@ -68,6 +68,8 @@ export function AlertSettingsForm({
   const [triggerResult, setTriggerResult] = useState<{ success?: string; error?: string } | null>(null);
   const [checkTimeLoading, setCheckTimeLoading] = useState(false);
   const [checkTimeResult, setCheckTimeResult] = useState<string | null>(null);
+  const [debugData, setDebugData] = useState<any>(null);
+  const [activeDebugTab, setActiveDebugTab] = useState<string>("summary");
 
   function toggleOffset(value: number) {
     setSelectedOffsets((current) =>
@@ -129,53 +131,200 @@ export function AlertSettingsForm({
   async function handleCheckTime() {
     setCheckTimeLoading(true);
     setCheckTimeResult(null);
+    setDebugData(null);
+    const startTime = performance.now();
+    const timestamp = new Date().toISOString();
+    const url = `/api/cron/send-alerts`;
+    
+    let debugInfo: any = {
+      timestamp,
+      request: {
+        url,
+        method: "GET",
+        environment: typeof window !== "undefined" ? window.location.hostname : "server",
+        isLocalhost: typeof window !== "undefined" ? window.location.hostname === "localhost" : false,
+      },
+    };
+
     try {
-      const response = await fetch(`/api/cron/send-alerts`);
-      const data = await response.json();
-      let result = `Hora atual (Lisboa): ${data.currentTime || data.debug?.currentTimeFormatted || "N/A"}\n`;
+      debugInfo.request.startTime = startTime;
+      
+      const response = await fetch(url);
+      const responseTime = performance.now() - startTime;
+      
+      debugInfo.response = {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries()),
+        responseTime: `${responseTime.toFixed(2)}ms`,
+      };
+
+      // Tentar ler resposta como texto primeiro para capturar erros de parsing
+      let responseText: string;
+      try {
+        responseText = await response.text();
+        debugInfo.response.bodySize = `${responseText.length} bytes`;
+      } catch (textError) {
+        debugInfo.errors = debugInfo.errors || [];
+        debugInfo.errors.push({
+          stage: "reading_response_text",
+          error: textError instanceof Error ? textError.message : String(textError),
+        });
+        throw new Error(`Erro ao ler resposta: ${textError instanceof Error ? textError.message : String(textError)}`);
+      }
+
+      // Tentar fazer parse do JSON
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+        debugInfo.response.parsed = true;
+      } catch (parseError) {
+        debugInfo.errors = debugInfo.errors || [];
+        debugInfo.errors.push({
+          stage: "parsing_json",
+          error: parseError instanceof Error ? parseError.message : String(parseError),
+        });
+        debugInfo.response.rawBody = responseText;
+        throw new Error(`Erro ao fazer parse do JSON: ${parseError instanceof Error ? parseError.message : String(parseError)}. Resposta raw: ${responseText.substring(0, 500)}`);
+      }
+
+      // Verificar se há erro na resposta
+      if (!response.ok) {
+        debugInfo.errors = debugInfo.errors || [];
+        debugInfo.errors.push({
+          stage: "http_error",
+          status: response.status,
+          statusText: response.statusText,
+          error: data.error || "Erro HTTP",
+        });
+      }
+
+      // Adicionar dados da resposta ao debug
+      debugInfo.responseData = data;
+      setDebugData(debugInfo);
+
+      // Construir resultado formatado
+      let result = `=== DEBUG COMPLETO ===\n`;
+      result += `Timestamp: ${timestamp}\n\n`;
+      
+      result += `[1] REQUEST INFO\n`;
+      result += `  URL: ${url}\n`;
+      result += `  Method: GET\n`;
+      result += `  Status: ${response.status} ${response.statusText}\n`;
+      result += `  Response Time: ${responseTime.toFixed(2)}ms\n`;
+      result += `  Environment: ${debugInfo.request.environment}\n`;
+      result += `  Is Localhost: ${debugInfo.request.isLocalhost}\n\n`;
+
+      if (data.debug?.serverEnvironment) {
+        result += `[2] SERVER ENVIRONMENT\n`;
+        const env = data.debug.serverEnvironment;
+        result += `  Timezone: ${env.timezone || "N/A"}\n`;
+        result += `  Locale: ${env.locale || "N/A"}\n`;
+        result += `  Node Version: ${env.nodeVersion || "N/A"}\n`;
+        result += `  Environment: ${env.environment || "N/A"}\n\n`;
+      }
+
+      result += `[3] TIME CALCULATION\n`;
+      result += `  Hora atual (Lisboa): ${data.currentTime || data.debug?.currentTimeFormatted || "N/A"}\n`;
       if (data.debug) {
-        result += `Hora UTC: ${data.debug.utcTime || "N/A"}\n`;
-        result += `Hora Lisboa formatada: ${data.debug.lisbonTimeString || "N/A"}\n`;
+        result += `  Hora UTC: ${data.debug.utcTime || "N/A"}\n`;
+        result += `  Hora Lisboa formatada: ${data.debug.lisbonTimeString || "N/A"}\n`;
         
-        // Debug detalhado do cálculo da hora
         if (data.debug.timeCalculation) {
-          result += `\n--- Debug Cálculo da Hora ---\n`;
           const tc = data.debug.timeCalculation;
           if (tc.method1) {
-            result += `Método 1 (formatToParts):\n`;
-            result += `  - Parts: ${JSON.stringify(tc.method1.parts)}\n`;
-            result += `  - Hours: ${tc.method1.hoursPart?.value || "N/A"}\n`;
-            result += `  - Minutes: ${tc.method1.minutesPart?.value || "N/A"}\n`;
-            result += `  - Formatter result: ${tc.method1.formatterResult}\n`;
+            result += `  Método 1 (formatToParts): ${tc.hoursPart && tc.minutesPart ? "SUCCESS" : "FAILED"}\n`;
+            if (tc.method1.parts) {
+              result += `    - Parts: ${JSON.stringify(tc.method1.parts)}\n`;
+            }
+            result += `    - Hours: ${tc.method1.hoursPart?.value || "N/A"}\n`;
+            result += `    - Minutes: ${tc.method1.minutesPart?.value || "N/A"}\n`;
+            result += `    - Formatter result: ${tc.method1.formatterResult || "N/A"}\n`;
           }
           if (tc.method2) {
-            result += `Método 2 (toLocaleString): ${tc.method2.lisbonString}\n`;
+            result += `  Método 2 (toLocaleString): ${tc.method2.lisbonString ? "SUCCESS" : "FAILED"}\n`;
+            result += `    - Result: "${tc.method2.lisbonString}"\n`;
           }
           if (tc.finalTime) {
-            result += `Hora final calculada: ${tc.finalTime}\n`;
+            result += `  Final Time: ${tc.finalTime}\n`;
           }
           if (tc.fallback) {
-            result += `Fallback (hora local): ${tc.fallback}\n`;
+            result += `  Fallback (hora local): ${tc.fallback}\n`;
           }
           if (tc.error) {
-            result += `ERRO: ${tc.error}\n`;
+            result += `  ERRO: ${tc.error}\n`;
           }
         }
-        
-        if (data.debug.allProfiles) {
-          result += `\n--- Horas Configuradas na BD ---\n`;
-          data.debug.allProfiles.forEach((p: any) => {
-            result += `- ${p.alertTime} ${p.matches ? "✓ CORRESPONDE" : "✗ não corresponde"}\n`;
-          });
-        }
-        if (data.debug.comparison) {
-          result += `\n--- Comparações ---\n${data.debug.comparison.join("\n")}\n`;
-        }
       }
+      result += `\n`;
+
+      if (data.debug?.queryDetails) {
+        result += `[4] DATABASE QUERY\n`;
+        const qd = data.debug.queryDetails;
+        result += `  Query Type: ${qd.queryType || "N/A"}\n`;
+        result += `  Profiles Found: ${qd.profilesFound || 0}\n`;
+        if (qd.alertTimes) {
+          result += `  Alert Times in DB: [${qd.alertTimes.join(", ")}]\n`;
+        }
+        if (qd.matches !== undefined) {
+          result += `  Matches: ${qd.matches ? "true" : "false"}\n`;
+        }
+        result += `\n`;
+      }
+
+      if (data.debug?.allProfiles) {
+        result += `[5] PROFILES IN DATABASE\n`;
+        data.debug.allProfiles.forEach((p: any) => {
+          result += `  - ${p.alertTime} ${p.matches ? "✓ CORRESPONDE" : "✗ não corresponde"}\n`;
+        });
+        result += `\n`;
+      }
+
+      result += `[6] RAW RESPONSE\n`;
+      result += `${JSON.stringify(data, null, 2)}\n\n`;
+
+      if (debugInfo.errors && debugInfo.errors.length > 0) {
+        result += `[7] ERRORS\n`;
+        debugInfo.errors.forEach((err: any, idx: number) => {
+          result += `  Error ${idx + 1}: ${err.stage || "unknown"}\n`;
+          result += `    - ${err.error || JSON.stringify(err)}\n`;
+        });
+      } else {
+        result += `[7] ERRORS\n  None\n`;
+      }
+
       result += `\n--- Mensagem ---\n${data.message || ""}`;
       setCheckTimeResult(result);
     } catch (error) {
-      setCheckTimeResult(`Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}\n\nStack: ${error instanceof Error ? error.stack : ""}`);
+      const responseTime = performance.now() - startTime;
+      debugInfo.errors = debugInfo.errors || [];
+      debugInfo.errors.push({
+        stage: "exception",
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      debugInfo.response = debugInfo.response || {};
+      debugInfo.response.responseTime = `${responseTime.toFixed(2)}ms`;
+      
+      setDebugData(debugInfo);
+      
+      let errorResult = `=== ERRO NO DEBUG ===\n`;
+      errorResult += `Timestamp: ${timestamp}\n\n`;
+      errorResult += `[1] REQUEST INFO\n`;
+      errorResult += `  URL: ${url}\n`;
+      errorResult += `  Method: GET\n`;
+      errorResult += `  Response Time: ${responseTime.toFixed(2)}ms\n\n`;
+      errorResult += `[2] ERROR DETAILS\n`;
+      errorResult += `  Type: ${error instanceof Error ? error.constructor.name : typeof error}\n`;
+      errorResult += `  Message: ${error instanceof Error ? error.message : String(error)}\n`;
+      if (error instanceof Error && error.stack) {
+        errorResult += `  Stack:\n${error.stack.split("\n").map(line => `    ${line}`).join("\n")}\n`;
+      }
+      errorResult += `\n[3] DEBUG INFO\n`;
+      errorResult += `${JSON.stringify(debugInfo, null, 2)}`;
+      
+      setCheckTimeResult(errorResult);
     } finally {
       setCheckTimeLoading(false);
     }
@@ -422,6 +571,28 @@ export function AlertSettingsForm({
               "Verificar hora"
             )}
           </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setCheckTimeLoading(true);
+              setCheckTimeResult(null);
+              setDebugData(null);
+              try {
+                const response = await fetch(`/api/debug/time-check`);
+                const data = await response.json();
+                setDebugData({ responseData: data, timestamp: new Date().toISOString() });
+                setCheckTimeResult(`=== DEBUG TIME CHECK ===\n${JSON.stringify(data, null, 2)}`);
+              } catch (error) {
+                setCheckTimeResult(`Erro: ${error instanceof Error ? error.message : String(error)}`);
+              } finally {
+                setCheckTimeLoading(false);
+              }
+            }}
+            disabled={checkTimeLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
+          >
+            Debug Hora
+          </button>
         </div>
         {triggerResult?.success ? (
           <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">
@@ -435,8 +606,144 @@ export function AlertSettingsForm({
         ) : null}
         {checkTimeResult ? (
           <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Debug - Verificação de Hora:</p>
-            <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Debug - Verificação de Hora:</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(checkTimeResult || "");
+                  }}
+                  className="text-xs px-2 py-1 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                  Copiar
+                </button>
+                {debugData ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const json = JSON.stringify(debugData, null, 2);
+                      const blob = new Blob([json], { type: "application/json" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `debug-${new Date().toISOString()}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="text-xs px-2 py-1 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    Exportar JSON
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            
+            {debugData ? (
+              <div className="mb-2">
+                <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+                  {["summary", "time", "database", "raw", "environment"].map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setActiveDebugTab(tab)}
+                      className={`px-3 py-1 text-xs font-medium transition ${
+                        activeDebugTab === tab
+                          ? "border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100"
+                          : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                      }`}
+                    >
+                      {tab === "summary" ? "Resumo" : 
+                       tab === "time" ? "Cálculo Hora" :
+                       tab === "database" ? "Base Dados" :
+                       tab === "raw" ? "Raw" :
+                       "Ambiente"}
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="mt-2">
+                  {activeDebugTab === "summary" && (
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <span className="font-semibold">Timestamp:</span> {debugData.timestamp}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Status:</span> {debugData.response?.status || "N/A"} {debugData.response?.statusText || ""}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Response Time:</span> {debugData.response?.responseTime || "N/A"}
+                      </div>
+                      {debugData.responseData?.currentTime && (
+                        <div>
+                          <span className="font-semibold">Hora atual (Lisboa):</span> {debugData.responseData.currentTime}
+                        </div>
+                      )}
+                      {debugData.errors && debugData.errors.length > 0 && (
+                        <div className="text-rose-600 dark:text-rose-400">
+                          <span className="font-semibold">Erros:</span> {debugData.errors.length}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {activeDebugTab === "time" && debugData.responseData?.debug?.timeCalculation && (
+                    <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono">
+                      {JSON.stringify(debugData.responseData.debug.timeCalculation, null, 2)}
+                    </pre>
+                  )}
+                  
+                  {activeDebugTab === "database" && (
+                    <div className="space-y-2 text-xs">
+                      {debugData.responseData?.debug?.allProfiles && (
+                        <div>
+                          <span className="font-semibold">Horas configuradas:</span>
+                          <ul className="list-disc list-inside mt-1">
+                            {debugData.responseData.debug.allProfiles.map((p: any, idx: number) => (
+                              <li key={idx}>
+                                {p.alertTime} {p.matches ? "✓" : "✗"}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {debugData.responseData?.debug?.queryDetails && (
+                        <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono">
+                          {JSON.stringify(debugData.responseData.debug.queryDetails, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  )}
+                  
+                  {activeDebugTab === "raw" && (
+                    <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono max-h-96 overflow-auto">
+                      {JSON.stringify(debugData.responseData || debugData, null, 2)}
+                    </pre>
+                  )}
+                  
+                  {activeDebugTab === "environment" && (
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <span className="font-semibold">Client:</span>
+                        <pre className="mt-1 p-2 bg-slate-50 dark:bg-slate-900 rounded">
+                          {JSON.stringify(debugData.request, null, 2)}
+                        </pre>
+                      </div>
+                      {debugData.responseData?.debug?.serverEnvironment && (
+                        <div>
+                          <span className="font-semibold">Server:</span>
+                          <pre className="mt-1 p-2 bg-slate-50 dark:bg-slate-900 rounded">
+                            {JSON.stringify(debugData.responseData.debug.serverEnvironment, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+            
+            <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono max-h-96 overflow-auto">
               {checkTimeResult}
             </pre>
           </div>
