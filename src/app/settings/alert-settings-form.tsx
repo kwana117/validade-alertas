@@ -136,20 +136,46 @@ export function AlertSettingsForm({
       if (data.debug) {
         result += `Hora UTC: ${data.debug.utcTime || "N/A"}\n`;
         result += `Hora Lisboa formatada: ${data.debug.lisbonTimeString || "N/A"}\n`;
+        
+        // Debug detalhado do cálculo da hora
+        if (data.debug.timeCalculation) {
+          result += `\n--- Debug Cálculo da Hora ---\n`;
+          const tc = data.debug.timeCalculation;
+          if (tc.method1) {
+            result += `Método 1 (formatToParts):\n`;
+            result += `  - Parts: ${JSON.stringify(tc.method1.parts)}\n`;
+            result += `  - Hours: ${tc.method1.hoursPart?.value || "N/A"}\n`;
+            result += `  - Minutes: ${tc.method1.minutesPart?.value || "N/A"}\n`;
+            result += `  - Formatter result: ${tc.method1.formatterResult}\n`;
+          }
+          if (tc.method2) {
+            result += `Método 2 (toLocaleString): ${tc.method2.lisbonString}\n`;
+          }
+          if (tc.finalTime) {
+            result += `Hora final calculada: ${tc.finalTime}\n`;
+          }
+          if (tc.fallback) {
+            result += `Fallback (hora local): ${tc.fallback}\n`;
+          }
+          if (tc.error) {
+            result += `ERRO: ${tc.error}\n`;
+          }
+        }
+        
         if (data.debug.allProfiles) {
-          result += `\nHoras configuradas na BD:\n`;
+          result += `\n--- Horas Configuradas na BD ---\n`;
           data.debug.allProfiles.forEach((p: any) => {
             result += `- ${p.alertTime} ${p.matches ? "✓ CORRESPONDE" : "✗ não corresponde"}\n`;
           });
         }
         if (data.debug.comparison) {
-          result += `\nComparações:\n${data.debug.comparison.join("\n")}\n`;
+          result += `\n--- Comparações ---\n${data.debug.comparison.join("\n")}\n`;
         }
       }
-      result += `\n${data.message || ""}`;
+      result += `\n--- Mensagem ---\n${data.message || ""}`;
       setCheckTimeResult(result);
     } catch (error) {
-      setCheckTimeResult(`Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+      setCheckTimeResult(`Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}\n\nStack: ${error instanceof Error ? error.stack : ""}`);
     } finally {
       setCheckTimeLoading(false);
     }

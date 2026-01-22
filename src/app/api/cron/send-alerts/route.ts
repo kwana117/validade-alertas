@@ -41,16 +41,69 @@ async function handleCron(forceUserId: string | null = null) {
 
   // Obter a hora atual em formato HH:MM (Lisboa timezone)
   const now = new Date();
+  let currentTime = "00:00";
+  let debugInfo: any = {};
+  
+  try {
+    // Método 1: Usar Intl.DateTimeFormat com formatToParts
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Lisbon",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const hoursPart = parts.find(p => p.type === "hour");
+    const minutesPart = parts.find(p => p.type === "minute");
+    
+    debugInfo.method1 = {
+      parts: parts,
+      hoursPart: hoursPart,
+      minutesPart: minutesPart,
+      formatterResult: formatter.format(now)
+    };
+    
+    if (hoursPart && minutesPart) {
+      const hours = hoursPart.value.padStart(2, "0");
+      const minutes = minutesPart.value.padStart(2, "0");
+      currentTime = `${hours}:${minutes}`;
+    } else {
+      // Método 2: Fallback usando toLocaleString
+      const lisbonString = now.toLocaleString("en-US", {
+        timeZone: "Europe/Lisbon",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      debugInfo.method2 = { lisbonString };
+      
+      // Extrair HH:MM do formato "HH:MM AM/PM" ou "HH:MM"
+      const match = lisbonString.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        const h = match[1].padStart(2, "0");
+        const m = match[2].padStart(2, "0");
+        currentTime = `${h}:${m}`;
+      }
+    }
+    
+    debugInfo.finalTime = currentTime;
+  } catch (error) {
+    debugInfo.error = error instanceof Error ? error.message : String(error);
+    // Fallback final: usar hora local (não ideal, mas melhor que nada)
+    const localHours = now.getHours().toString().padStart(2, "0");
+    const localMinutes = now.getMinutes().toString().padStart(2, "0");
+    currentTime = `${localHours}:${localMinutes}`;
+    debugInfo.fallback = currentTime;
+  }
+  
+  // Formatter para debug (sempre disponível)
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "Europe/Lisbon",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
-  const parts = formatter.formatToParts(now);
-  const hours = parts.find(p => p.type === "hour")?.value.padStart(2, "0") ?? "00";
-  const minutes = parts.find(p => p.type === "minute")?.value.padStart(2, "0") ?? "00";
-  const currentTime = `${hours}:${minutes}`;
 
   // Se forceUserId for passado, buscar apenas esse utilizador (ignorar hora)
   let query = supabase
@@ -98,7 +151,8 @@ async function handleCron(forceUserId: string | null = null) {
         utcTime: now.toISOString(),
         lisbonTimeString: formatter.format(now),
         allProfiles: alertTimes,
-        comparison: alertTimes.map(p => `${p.alertTime} === ${currentTime}? ${p.matches}`)
+        comparison: alertTimes.map(p => `${p.alertTime} === ${currentTime}? ${p.matches}`),
+        timeCalculation: debugInfo
       },
       message: forceUserId
         ? "Utilizador não encontrado ou sem chat ID configurado."
@@ -285,7 +339,8 @@ async function handleCron(forceUserId: string | null = null) {
       currentTimeFormatted: currentTime,
       utcTime: now.toISOString(),
       lisbonTimeString: formatter.format(now),
-      matchedProfiles: profileRows.map(p => ({ userId: p.id, alertTime: p.alert_time }))
+      matchedProfiles: profileRows.map(p => ({ userId: p.id, alertTime: p.alert_time })),
+      timeCalculation: debugInfo
     }
   });
 }
