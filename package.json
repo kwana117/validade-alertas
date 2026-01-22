@@ -7,7 +7,8 @@
     "build": "PATH=/opt/homebrew/opt/node@20/bin:$PATH UV_THREADPOOL_SIZE=1 NEXT_PRIVATE_MAX_WORKERS=1 next build --webpack",
     "start": "PATH=/opt/homebrew/opt/node@20/bin:$PATH next start",
     "lint": "PATH=/opt/homebrew/opt/node@20/bin:$PATH eslint",
-    "test:supabase": "node scripts/test-supabase-connection.js"
+    "test:supabase": "node scripts/test-supabase-connection.js",
+    "deploy": "bash scripts/deploy-droplet.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
