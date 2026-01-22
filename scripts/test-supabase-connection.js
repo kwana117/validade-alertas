@@ -4,13 +4,31 @@
  * Script para testar conexão ao Supabase diretamente no servidor
  * Executa: node scripts/test-supabase-connection.js
  * 
- * Este script lê as variáveis de ambiente diretamente do process.env
- * (que vêm do .htaccess em produção via LiteSpeed/Apache)
+ * Este script lê as variáveis de ambiente de:
+ * 1. .env.local (se existir)
+ * 2. process.env (que vêm do .htaccess em produção via LiteSpeed/Apache)
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
+const path = require('path');
 
-// Ler do process.env (vem do .htaccess em produção)
+// Carregar .env.local se existir
+const envPath = path.join(__dirname, '..', '.env.local');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...valueParts] = trimmed.split('=');
+      if (key && valueParts.length > 0) {
+        process.env[key.trim()] = valueParts.join('=').trim();
+      }
+    }
+  });
+}
+
+// Ler do process.env (vem do .htaccess em produção ou .env.local)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
