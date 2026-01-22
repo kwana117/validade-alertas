@@ -10,12 +10,16 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("pt-PT", {
 
 const DEFAULT_OFFSETS = [7, 3, 1, 0];
 
-export async function GET() {
-  return handleCron();
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const forceUserId = searchParams.get("force_user_id");
+  return handleCron(forceUserId);
 }
 
-export async function POST() {
-  return handleCron();
+export async function POST(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const forceUserId = searchParams.get("force_user_id");
+  return handleCron(forceUserId);
 }
 
 function offsetLabel(offset: number) {
@@ -24,7 +28,7 @@ function offsetLabel(offset: number) {
   return `Expiram daqui a ${offset} dias`;
 }
 
-async function handleCron() {
+async function handleCron(forceUserId: string | null = null) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     return NextResponse.json(
@@ -35,12 +39,28 @@ async function handleCron() {
 
   const supabase = createAdminSupabaseClient();
 
-  const { data: profiles, error: profilesError } = await supabase
+  // Obter a hora atual em formato HH:MM (Lisboa timezone)
+  const now = new Date();
+  const lisbonTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Lisbon" }));
+  const hours = lisbonTime.getHours().toString().padStart(2, "0");
+  const minutes = lisbonTime.getMinutes().toString().padStart(2, "0");
+  const currentTime = `${hours}:${minutes}`;
+
+  // Se forceUserId for passado, buscar apenas esse utilizador (ignorar hora)
+  let query = supabase
     .from("profiles")
     .select(
-      "id, telegram_chat_id, alert_offsets_days, alert_include_expired, alert_expired_max_days",
+      "id, telegram_chat_id, alert_offsets_days, alert_include_expired, alert_expired_max_days, alert_time",
     )
     .not("telegram_chat_id", "is", null);
+
+  if (forceUserId) {
+    query = query.eq("id", forceUserId);
+  } else {
+    query = query.eq("alert_time", currentTime);
+  }
+
+  const { data: profiles, error: profilesError } = await query;
 
   if (profilesError) {
     return NextResponse.json({ error: profilesError.message }, { status: 500 });
@@ -49,7 +69,28 @@ async function handleCron() {
   const profileRows = (profiles ?? []).filter((profile) => profile.id);
 
   if (profileRows.length === 0) {
-    return NextResponse.json({ processedUsers: 0, sent: 0, errors: [] });
+    // Debug: buscar todos os alert_times para ver o que está na BD
+    const { data: allProfiles } = await supabase
+      .from("profiles")
+      .select("id, alert_time, telegram_chat_id")
+      .not("telegram_chat_id", "is", null);
+    
+    const alertTimes = (allProfiles ?? []).map(p => p.alert_time).filter(Boolean);
+    
+    return NextResponse.json({
+      currentTime,
+      forceUserId: forceUserId ?? null,
+      processedUsers: 0,
+      sent: 0,
+      errors: [],
+      debug: {
+        allAlertTimes: alertTimes,
+        currentTimeFormatted: currentTime,
+      },
+      message: forceUserId
+        ? "Utilizador não encontrado ou sem chat ID configurado."
+        : `Nenhum utilizador com notificações configuradas para as ${currentTime}. Horas configuradas: ${alertTimes.join(", ")}`
+    });
   }
 
   const profilesByUser = new Map(
@@ -222,6 +263,8 @@ async function handleCron() {
   }
 
   return NextResponse.json({
+    currentTime,
+    forceUserId: forceUserId ?? null,
     processedUsers: grouped.size,
     sent: results.filter((r) => r.sent).length,
     errors: results.filter((r) => !r.sent),

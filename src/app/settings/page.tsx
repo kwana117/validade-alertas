@@ -121,6 +121,12 @@ async function updateAlertSettings(
     ? Math.max(1, Math.min(365, rawExpiredMax))
     : 7;
 
+  const alertTime = formData.get("alert_time")?.toString() ?? "09:00";
+  // Validar formato HH:MM
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(alertTime)) {
+    return { error: "Hora inválida. Escolhe uma hora válida." };
+  }
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -136,6 +142,7 @@ async function updateAlertSettings(
       alert_offsets_days: uniqueOffsets,
       alert_include_expired: includeExpired,
       alert_expired_max_days: expiredMaxDays,
+      alert_time: alertTime,
     })
     .eq("id", user.id);
 
@@ -168,7 +175,7 @@ export default async function SettingsPage() {
   if (profile && !profileError) {
     const { data: alertData } = await supabase
       .from("profiles")
-      .select("alert_offsets_days, alert_include_expired, alert_expired_max_days")
+      .select("alert_offsets_days, alert_include_expired, alert_expired_max_days, alert_time")
       .eq("id", user.id)
       .maybeSingle();
     
@@ -188,7 +195,7 @@ export default async function SettingsPage() {
     if (adminProfile) {
       const { data: adminAlertData } = await admin
         .from("profiles")
-        .select("alert_offsets_days, alert_include_expired, alert_expired_max_days")
+        .select("alert_offsets_days, alert_include_expired, alert_expired_max_days, alert_time")
         .eq("id", user.id)
         .maybeSingle();
       
@@ -202,6 +209,7 @@ export default async function SettingsPage() {
       : DEFAULT_OFFSETS;
   const alertIncludeExpired = (profile as any)?.alert_include_expired ?? true;
   const alertExpiredMaxDays = (profile as any)?.alert_expired_max_days ?? 7;
+  const alertTime = (profile as any)?.alert_time ?? "09:00";
 
   return (
     <div className="space-y-8">
@@ -261,7 +269,9 @@ export default async function SettingsPage() {
         initialOffsets={alertOffsets}
         initialIncludeExpired={alertIncludeExpired}
         initialExpiredMaxDays={alertExpiredMaxDays}
+        initialAlertTime={alertTime}
         action={updateAlertSettings}
+        userId={user.id}
       />
 
       <ItemTestToggle

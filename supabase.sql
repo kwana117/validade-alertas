@@ -9,6 +9,7 @@ create table if not exists public.profiles (
   alert_offsets_days int[] not null default '{7,3,1,0}',
   alert_include_expired boolean not null default true,
   alert_expired_max_days int not null default 7,
+  alert_time text not null default '09:00',
   created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -23,6 +24,9 @@ alter table public.profiles
 
 alter table public.profiles
   add column if not exists alert_expired_max_days int not null default 7;
+
+alter table public.profiles
+  add column if not exists alert_time text not null default '09:00';
 
 -- Itens monitorizados
 create table if not exists public.items (

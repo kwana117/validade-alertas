@@ -1,15 +1,19 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { SettingsState } from "./types";
 import { initialSettingsState } from "./types";
 
 const OFFSET_OPTIONS = [30, 14, 7, 3, 1, 0] as const;
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTE_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 type Props = {
   initialOffsets: number[];
   initialIncludeExpired: boolean;
   initialExpiredMaxDays: number;
+  initialAlertTime: string;
+  userId: string;
   action: (state: SettingsState, formData: FormData) => Promise<SettingsState>;
 };
 
@@ -17,6 +21,8 @@ export function AlertSettingsForm({
   initialOffsets,
   initialIncludeExpired,
   initialExpiredMaxDays,
+  initialAlertTime,
+  userId,
   action,
 }: Props) {
   const [state, formAction] = useActionState(action, initialSettingsState);
@@ -29,7 +35,37 @@ export function AlertSettingsForm({
   const [expiredMaxDays, setExpiredMaxDays] = useState(
     initialExpiredMaxDays,
   );
+  const parseHour = (time: string) => {
+    const [h] = time.split(":");
+    const parsed = parseInt(h, 10);
+    return Number.isNaN(parsed) ? 9 : parsed;
+  };
+
+  const parseMinute = (time: string) => {
+    const [, m] = time.split(":");
+    const parsed = parseInt(m, 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const [alertHour, setAlertHour] = useState(() => parseHour(initialAlertTime));
+  const [alertMinute, setAlertMinute] = useState(() => parseMinute(initialAlertTime));
+  const lastInitialTimeRef = useRef(initialAlertTime);
+
+  useEffect(() => {
+    // Só atualizar se o initialAlertTime realmente mudou desde a última vez
+    if (initialAlertTime !== lastInitialTimeRef.current) {
+      const newHour = parseHour(initialAlertTime);
+      const newMinute = parseMinute(initialAlertTime);
+      setAlertHour(newHour);
+      setAlertMinute(newMinute);
+      lastInitialTimeRef.current = initialAlertTime;
+    }
+  }, [initialAlertTime]);
+
+  const alertTime = `${alertHour.toString().padStart(2, "0")}:${alertMinute.toString().padStart(2, "0")}`;
   const [clientError, setClientError] = useState<string | null>(null);
+  const [triggerLoading, setTriggerLoading] = useState(false);
+  const [triggerResult, setTriggerResult] = useState<{ success?: string; error?: string } | null>(null);
 
   function toggleOffset(value: number) {
     setSelectedOffsets((current) =>
@@ -65,6 +101,26 @@ export function AlertSettingsForm({
       return;
     }
     setClientError(null);
+  }
+
+  async function handleTriggerNow() {
+    setTriggerLoading(true);
+    setTriggerResult(null);
+    try {
+      const response = await fetch(`/api/cron/send-alerts?force_user_id=${userId}`);
+      const data = await response.json();
+      if (data.sent > 0) {
+        setTriggerResult({ success: `Notificação enviada com sucesso! (${data.sent} mensagem)` });
+      } else if (data.errors && data.errors.length > 0) {
+        setTriggerResult({ error: `Erro ao enviar: ${data.errors[0]?.message ?? "Erro desconhecido"}` });
+      } else {
+        setTriggerResult({ error: data.message ?? "Nenhum item para notificar ou chat ID não configurado." });
+      }
+    } catch {
+      setTriggerResult({ error: "Erro ao comunicar com o servidor." });
+    } finally {
+      setTriggerLoading(false);
+    }
   }
 
   return (
@@ -172,6 +228,11 @@ export function AlertSettingsForm({
             name="expired_max_days"
             value={expiredMaxDays}
           />
+          <input
+            type="hidden"
+            name="alert_time"
+            value={alertTime}
+          />
 
           {includeExpired ? (
             <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
@@ -194,6 +255,45 @@ export function AlertSettingsForm({
               />
             </div>
           ) : null}
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+          <label
+            htmlFor="alert_hour"
+            className="text-sm font-medium text-slate-700 dark:text-slate-200"
+          >
+            Hora do alerta diário
+          </label>
+          <div className="flex items-center gap-2">
+            <select
+              id="alert_hour"
+              value={alertHour}
+              onChange={(event) => setAlertHour(Number(event.target.value))}
+              className="w-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            >
+              {HOUR_OPTIONS.map((hour) => (
+                <option key={hour} value={hour}>
+                  {hour.toString().padStart(2, "0")}
+                </option>
+              ))}
+            </select>
+            <span className="text-slate-500 dark:text-slate-400">:</span>
+            <select
+              id="alert_minute"
+              value={alertMinute}
+              onChange={(event) => setAlertMinute(Number(event.target.value))}
+              className="w-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            >
+              {MINUTE_OPTIONS.map((minute) => (
+                <option key={minute} value={minute}>
+                  {minute.toString().padStart(2, "0")}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Hora de Lisboa (Portugal). Recebes uma notificação diária nesta hora se tiveres itens a expirar.
+          </p>
         </div>
 
         {clientError ? (
@@ -219,6 +319,43 @@ export function AlertSettingsForm({
           Guardar alertas
         </button>
       </form>
+
+      <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Testar notificação automática
+        </h3>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Dispara uma notificação agora com os teus itens atuais, ignorando a hora configurada.
+        </p>
+        <button
+          type="button"
+          onClick={handleTriggerNow}
+          disabled={triggerLoading}
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
+        >
+          {triggerLoading ? (
+            <>
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              A enviar...
+            </>
+          ) : (
+            "Disparar notificação agora"
+          )}
+        </button>
+        {triggerResult?.success ? (
+          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">
+            {triggerResult.success}
+          </p>
+        ) : null}
+        {triggerResult?.error ? (
+          <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">
+            {triggerResult.error}
+          </p>
+        ) : null}
+      </div>
     </section>
   );
 }
