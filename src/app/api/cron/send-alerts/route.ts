@@ -41,9 +41,15 @@ async function handleCron(forceUserId: string | null = null) {
 
   // Obter a hora atual em formato HH:MM (Lisboa timezone)
   const now = new Date();
-  const lisbonTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Lisbon" }));
-  const hours = lisbonTime.getHours().toString().padStart(2, "0");
-  const minutes = lisbonTime.getMinutes().toString().padStart(2, "0");
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Lisbon",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const hours = parts.find(p => p.type === "hour")?.value.padStart(2, "0") ?? "00";
+  const minutes = parts.find(p => p.type === "minute")?.value.padStart(2, "0") ?? "00";
   const currentTime = `${hours}:${minutes}`;
 
   // Se forceUserId for passado, buscar apenas esse utilizador (ignorar hora)
@@ -75,7 +81,11 @@ async function handleCron(forceUserId: string | null = null) {
       .select("id, alert_time, telegram_chat_id")
       .not("telegram_chat_id", "is", null);
     
-    const alertTimes = (allProfiles ?? []).map(p => p.alert_time).filter(Boolean);
+    const alertTimes = (allProfiles ?? []).map(p => ({
+      userId: p.id,
+      alertTime: p.alert_time,
+      matches: p.alert_time === currentTime
+    }));
     
     return NextResponse.json({
       currentTime,
@@ -84,12 +94,15 @@ async function handleCron(forceUserId: string | null = null) {
       sent: 0,
       errors: [],
       debug: {
-        allAlertTimes: alertTimes,
         currentTimeFormatted: currentTime,
+        utcTime: now.toISOString(),
+        lisbonTimeString: formatter.format(now),
+        allProfiles: alertTimes,
+        comparison: alertTimes.map(p => `${p.alertTime} === ${currentTime}? ${p.matches}`)
       },
       message: forceUserId
         ? "Utilizador não encontrado ou sem chat ID configurado."
-        : `Nenhum utilizador com notificações configuradas para as ${currentTime}. Horas configuradas: ${alertTimes.join(", ")}`
+        : `Nenhum utilizador com notificações configuradas para as ${currentTime}. Horas configuradas: ${alertTimes.map(p => p.alertTime).join(", ")}`
     });
   }
 
@@ -268,5 +281,11 @@ async function handleCron(forceUserId: string | null = null) {
     processedUsers: grouped.size,
     sent: results.filter((r) => r.sent).length,
     errors: results.filter((r) => !r.sent),
+    debug: {
+      currentTimeFormatted: currentTime,
+      utcTime: now.toISOString(),
+      lisbonTimeString: formatter.format(now),
+      matchedProfiles: profileRows.map(p => ({ userId: p.id, alertTime: p.alert_time }))
+    }
   });
 }

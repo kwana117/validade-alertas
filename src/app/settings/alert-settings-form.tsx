@@ -66,6 +66,8 @@ export function AlertSettingsForm({
   const [clientError, setClientError] = useState<string | null>(null);
   const [triggerLoading, setTriggerLoading] = useState(false);
   const [triggerResult, setTriggerResult] = useState<{ success?: string; error?: string } | null>(null);
+  const [checkTimeLoading, setCheckTimeLoading] = useState(false);
+  const [checkTimeResult, setCheckTimeResult] = useState<string | null>(null);
 
   function toggleOffset(value: number) {
     setSelectedOffsets((current) =>
@@ -114,12 +116,42 @@ export function AlertSettingsForm({
       } else if (data.errors && data.errors.length > 0) {
         setTriggerResult({ error: `Erro ao enviar: ${data.errors[0]?.message ?? "Erro desconhecido"}` });
       } else {
-        setTriggerResult({ error: data.message ?? "Nenhum item para notificar ou chat ID não configurado." });
+        const debugInfo = data.debug ? `\n\nDebug: Hora atual (Lisboa): ${data.debug.currentTimeFormatted || data.currentTime}` : '';
+        setTriggerResult({ error: (data.message ?? "Nenhum item para notificar ou chat ID não configurado.") + debugInfo });
       }
     } catch {
       setTriggerResult({ error: "Erro ao comunicar com o servidor." });
     } finally {
       setTriggerLoading(false);
+    }
+  }
+
+  async function handleCheckTime() {
+    setCheckTimeLoading(true);
+    setCheckTimeResult(null);
+    try {
+      const response = await fetch(`/api/cron/send-alerts`);
+      const data = await response.json();
+      let result = `Hora atual (Lisboa): ${data.currentTime || data.debug?.currentTimeFormatted || "N/A"}\n`;
+      if (data.debug) {
+        result += `Hora UTC: ${data.debug.utcTime || "N/A"}\n`;
+        result += `Hora Lisboa formatada: ${data.debug.lisbonTimeString || "N/A"}\n`;
+        if (data.debug.allProfiles) {
+          result += `\nHoras configuradas na BD:\n`;
+          data.debug.allProfiles.forEach((p: any) => {
+            result += `- ${p.alertTime} ${p.matches ? "✓ CORRESPONDE" : "✗ não corresponde"}\n`;
+          });
+        }
+        if (data.debug.comparison) {
+          result += `\nComparações:\n${data.debug.comparison.join("\n")}\n`;
+        }
+      }
+      result += `\n${data.message || ""}`;
+      setCheckTimeResult(result);
+    } catch (error) {
+      setCheckTimeResult(`Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+    } finally {
+      setCheckTimeLoading(false);
     }
   }
 
@@ -327,33 +359,61 @@ export function AlertSettingsForm({
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Dispara uma notificação agora com os teus itens atuais, ignorando a hora configurada.
         </p>
-        <button
-          type="button"
-          onClick={handleTriggerNow}
-          disabled={triggerLoading}
-          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
-        >
-          {triggerLoading ? (
-            <>
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              A enviar...
-            </>
-          ) : (
-            "Disparar notificação agora"
-          )}
-        </button>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={handleTriggerNow}
+            disabled={triggerLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
+          >
+            {triggerLoading ? (
+              <>
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                A enviar...
+              </>
+            ) : (
+              "Disparar notificação agora"
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleCheckTime}
+            disabled={checkTimeLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
+          >
+            {checkTimeLoading ? (
+              <>
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                A verificar...
+              </>
+            ) : (
+              "Verificar hora"
+            )}
+          </button>
+        </div>
         {triggerResult?.success ? (
           <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">
             {triggerResult.success}
           </p>
         ) : null}
         {triggerResult?.error ? (
-          <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">
+          <p className="mt-2 text-sm text-rose-600 dark:text-rose-300 whitespace-pre-line">
             {triggerResult.error}
           </p>
+        ) : null}
+        {checkTimeResult ? (
+          <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Debug - Verificação de Hora:</p>
+            <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono">
+              {checkTimeResult}
+            </pre>
+          </div>
         ) : null}
       </div>
     </section>
