@@ -113,16 +113,27 @@ export function AlertSettingsForm({
     try {
       const response = await fetch(`/api/cron/send-alerts?force_user_id=${userId}`);
       const data = await response.json();
+      
+      // Se houver erro HTTP ou erro na resposta
+      if (!response.ok || data.error) {
+        const errorMsg = data.error || "Erro desconhecido";
+        const hint = data.hint ? `\n\n💡 ${data.hint}` : '';
+        const details = data.details ? `\n\nDetalhes: ${data.details}` : '';
+        setTriggerResult({ error: `❌ ${errorMsg}${hint}${details}` });
+        return;
+      }
+      
       if (data.sent > 0) {
-        setTriggerResult({ success: `Notificação enviada com sucesso! (${data.sent} mensagem)` });
+        setTriggerResult({ success: `✅ Notificação enviada com sucesso! (${data.sent} mensagem)` });
       } else if (data.errors && data.errors.length > 0) {
-        setTriggerResult({ error: `Erro ao enviar: ${data.errors[0]?.message ?? "Erro desconhecido"}` });
+        const errorDetails = data.errors.map((e: any) => e.message || e).join(", ");
+        setTriggerResult({ error: `❌ Erro ao enviar: ${errorDetails}` });
       } else {
-        const debugInfo = data.debug ? `\n\nDebug: Hora atual (Lisboa): ${data.debug.currentTimeFormatted || data.currentTime}` : '';
+        const debugInfo = data.debug ? `\n\nDebug: Hora atual (Lisboa): ${data.debug.currentTimeFormatted || data.currentTime || "N/A"}` : '';
         setTriggerResult({ error: (data.message ?? "Nenhum item para notificar ou chat ID não configurado.") + debugInfo });
       }
-    } catch {
-      setTriggerResult({ error: "Erro ao comunicar com o servidor." });
+    } catch (error) {
+      setTriggerResult({ error: `❌ Erro ao comunicar com o servidor: ${error instanceof Error ? error.message : "Erro desconhecido"}` });
     } finally {
       setTriggerLoading(false);
     }
@@ -534,12 +545,12 @@ export function AlertSettingsForm({
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Dispara uma notificação agora com os teus itens atuais, ignorando a hora configurada.
         </p>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <button
             type="button"
             onClick={handleTriggerNow}
             disabled={triggerLoading}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700 sm:w-auto"
           >
             {triggerLoading ? (
               <>
@@ -557,7 +568,7 @@ export function AlertSettingsForm({
             type="button"
             onClick={handleCheckTime}
             disabled={checkTimeLoading}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700 sm:w-auto"
           >
             {checkTimeLoading ? (
               <>
@@ -589,7 +600,7 @@ export function AlertSettingsForm({
               }
             }}
             disabled={checkTimeLoading}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700 sm:w-auto"
           >
             Debug Hora
           </button>
