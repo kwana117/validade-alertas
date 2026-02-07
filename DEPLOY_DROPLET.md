@@ -88,3 +88,21 @@ curl https://validade.digitalimpact.pt/api/cron/send-alerts
 - Verificar se a app está a correr: `pm2 status`
 - Verificar logs: `pm2 logs validade-alertas`
 - Verificar se a porta está aberta
+
+### EADDRINUSE (porta já em uso) — UI sem CSS, 500 em /_next/static/*
+Quando um processo "fantasma" (ex.: `next-server` fora do PM2) ocupa a porta da app, o PM2 entra em loop de restart e o site fica sem CSS / 500 nos assets.
+
+1. **Ver quem está na porta** (ex.: 3001):
+   ```bash
+   ss -ltnp | grep :3001
+   # ou
+   lsof -i :3001
+   ```
+2. **Correção rápida** — usar o script de fix no droplet:
+   ```bash
+   cd /var/www/validade-alertas
+   git pull
+   bash scripts/fix-droplet-port.sh 3001
+   ```
+3. **Manual**: matar o PID com `kill -9 <PID>`, garantir que não há outra instância PM2 (ex.: utilizador `deploy`) com `validade-alertas`, e reiniciar: `pm2 start ecosystem.config.js --only validade-alertas --update-env && pm2 save`.
+4. Garantir que **Nginx e `ecosystem.config.js`** usam a mesma porta (ex.: 3001).
