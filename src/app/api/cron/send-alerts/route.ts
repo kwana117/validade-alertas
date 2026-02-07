@@ -278,37 +278,6 @@ async function handleCron(forceUserId: string | null = null) {
   const profileRows = (profiles ?? []).filter((profile) => profile.id);
 
   if (profileRows.length === 0) {
-    // Se foi erro de API key, retornar erro específico
-    if (profilesError && (profilesError.message?.includes("API key") || profilesError.message?.includes("Unregistered"))) {
-      const executionTime = Date.now() - startTime;
-      return NextResponse.json({
-        error: "Erro de autenticação com Supabase: API key inválida ou não registada.",
-        details: profilesError.message,
-        hint: "Verifica se a SUPABASE_SERVICE_ROLE_KEY no .htaccess corresponde à chave atual no Supabase Dashboard.",
-        currentTime,
-        forceUserId: forceUserId ?? null,
-        processedUsers: 0,
-        sent: 0,
-        errors: [{
-          message: profilesError.message,
-          hint: profilesError.hint,
-        }],
-        debug: {
-          currentTimeFormatted: currentTime,
-          utcTime: now.toISOString(),
-          lisbonTimeString: formatter.format(now),
-          timeCalculation: debugInfo,
-          serverEnvironment,
-          queryDetails: {
-            ...debugInfo.queryDetails,
-            error: "API key inválida - não foi possível fazer queries à BD",
-          },
-          executionTime: `${executionTime}ms`,
-        },
-        message: "Não foi possível aceder à base de dados devido a erro de autenticação."
-      }, { status: 500 });
-    }
-    
     // Debug: buscar todos os alert_times para ver o que está na BD
     console.log(`[CRON] No profiles found, fetching all alert times for debug`);
     const { data: allProfiles, error: allProfilesError } = await supabase
