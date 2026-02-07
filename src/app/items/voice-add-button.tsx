@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LocationType } from "@/lib/frequent-items";
-import { LOCATIONS, formatLocationLabel } from "@/lib/items";
 
 const MAX_RECORDING_MS = 90_000;
 
@@ -180,7 +179,22 @@ export function VoiceAddButton() {
 
       setTranscript(typeof data.transcript === "string" ? data.transcript : null);
       setItems(draftItems);
-      setShowConfirm(true);
+      if (draftItems.length > 0) {
+        try {
+          sessionStorage.setItem(
+            "voice-draft",
+            JSON.stringify({
+              items: draftItems,
+              transcript: typeof data.transcript === "string" ? data.transcript : null,
+            }),
+          );
+          router.push("/items/voice-confirm");
+        } catch {
+          setShowConfirm(true);
+        }
+      } else {
+        setShowConfirm(true);
+      }
     } catch (err) {
       console.error("Erro ao processar áudio:", err);
       setError(err instanceof Error ? err.message : "Erro ao processar áudio");
@@ -189,59 +203,23 @@ export function VoiceAddButton() {
     }
   }, []);
 
-  const handleUpdateItem = useCallback(
-    (id: string, patch: Partial<DraftItem>) => {
-      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-    },
-    [],
-  );
-
-  const handleRemoveItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  }, []);
-
-  const handleConfirm = useCallback(async () => {
-    setError(null);
-    if (items.length === 0) {
-      setError("Não há itens para adicionar.");
-      return;
-    }
-
-    const invalid = items.some((item) => !item.name.trim() || !item.expires_at);
-    if (invalid) {
-      setError("Preenche o nome e a data de todos os itens.");
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const response = await fetch("/api/items/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao adicionar itens");
-      }
-
-      resetAll();
-      router.refresh();
-    } catch (err) {
-      console.error("Erro ao adicionar itens:", err);
-      setError(err instanceof Error ? err.message : "Erro ao adicionar itens");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [items, resetAll, router]);
-
   useEffect(() => {
     return () => {
       clearTimer();
       stopStream();
     };
   }, [clearTimer, stopStream]);
+
+  const overlayOpen = isRecording || isProcessing || showConfirm || !!error;
+  useEffect(() => {
+    if (overlayOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [overlayOpen]);
 
   return (
     <>
@@ -282,22 +260,22 @@ export function VoiceAddButton() {
                 <div className="flex w-full items-center justify-end gap-3">
                   <button
                     type="button"
-                    onClick={stopRecording}
-                    aria-label="Terminar gravação"
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white shadow-md transition hover:bg-emerald-500"
-                  >
-                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
                     onClick={resetAll}
                     aria-label="Cancelar gravação"
                     className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                   >
                     <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stopRecording}
+                    aria-label="Terminar gravação"
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white shadow-md transition hover:bg-emerald-500"
+                  >
+                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </button>
                 </div>
@@ -319,14 +297,9 @@ export function VoiceAddButton() {
             {showConfirm && !isRecording && !isProcessing && (
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                      Confirma os itens
-                    </h2>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      Revê e ajusta antes de adicionar.
-                    </p>
-                  </div>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Sem itens extraídos
+                  </h2>
                   <button
                     type="button"
                     onClick={resetAll}
@@ -335,91 +308,9 @@ export function VoiceAddButton() {
                     Fechar
                   </button>
                 </div>
-
-                {transcript && (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    <span className="block font-semibold text-slate-700 dark:text-slate-200">Transcrição</span>
-                    {transcript}
-                  </div>
-                )}
-
-                {items.length === 0 ? (
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
-                    Não conseguimos extrair itens. Tenta gravar novamente.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-                      >
-                        <div className="grid gap-3 md:grid-cols-[1.3fr_0.8fr_0.8fr_auto]">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) => handleUpdateItem(item.id, { name: e.target.value })}
-                            onBlur={(e) =>
-                              handleUpdateItem(item.id, { name: capitalizeName(e.target.value) })
-                            }
-                            placeholder="Nome do produto"
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                          />
-                          <select
-                            value={item.location}
-                            onChange={(e) =>
-                              handleUpdateItem(item.id, { location: e.target.value as LocationType })
-                            }
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                          >
-                            {LOCATIONS.map((loc) => (
-                              <option key={loc.value} value={loc.value}>
-                                {formatLocationLabel(loc.value)}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="date"
-                            value={item.expires_at}
-                            onChange={(e) => handleUpdateItem(item.id, { expires_at: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {error && (
-                  <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-200">
-                    {error}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={handleConfirm}
-                    className="flex-1 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-                    disabled={items.length === 0}
-                  >
-                    Adicionar {items.length} itens
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetAll}
-                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    Cancelar
-                  </button>
-                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Não conseguimos extrair itens. Tenta gravar novamente.
+                </p>
               </div>
             )}
 
