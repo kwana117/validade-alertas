@@ -64,6 +64,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color-scheme: dark;
 }
 
+/* Evitar overflow do input date em grids (ex.: confirmação por voz) */
+.date-input-confirm {
+  box-sizing: border-box;
+  min-width: 0;
+}
+.date-input-confirm::-webkit-date-and-time-value {
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+}
+@supports (-moz-appearance: none) {
+  .date-input-confirm::-moz-placeholder {
+    min-width: 0;
+  }
+}
+
 label {
   font-weight: 500;
   font-size: 0.95rem;
