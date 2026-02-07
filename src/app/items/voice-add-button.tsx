@@ -252,7 +252,7 @@ export function VoiceAddButton() {
             startRecording();
           }
         }}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg transition hover:bg-slate-800 disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+        className="fixed z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg transition hover:bg-slate-800 disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 [bottom:calc(env(safe-area-inset-bottom)+1.5rem)] [right:calc(env(safe-area-inset-right)+1.5rem)]"
         aria-label="Gravar item por voz"
         disabled={isRecording || isProcessing}
       >
@@ -279,7 +279,7 @@ export function VoiceAddButton() {
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   Diz apenas: nome do produto, local de guardar e data de validade.
                 </p>
-                <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={stopRecording}

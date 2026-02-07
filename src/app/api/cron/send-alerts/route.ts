@@ -34,6 +34,7 @@ async function handleCron(forceUserId: string | null = null) {
   
   console.log(`[CRON] Starting handleCron at ${timestamp}`, { forceUserId });
   
+  // Validar variáveis de ambiente
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     console.error(`[CRON] TELEGRAM_BOT_TOKEN não está definido`);
@@ -43,7 +44,82 @@ async function handleCron(forceUserId: string | null = null) {
     );
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  // Debug: Log das variáveis (sem mostrar valores completos por segurança)
+  console.log(`[CRON] Environment check:`, {
+    hasSupabaseUrl: !!supabaseUrl,
+    supabaseUrlLength: supabaseUrl?.length || 0,
+    hasServiceRoleKey: !!serviceRoleKey,
+    serviceRoleKeyLength: serviceRoleKey?.length || 0,
+    serviceRoleKeyPrefix: serviceRoleKey ? serviceRoleKey.substring(0, 10) + "..." : "N/A",
+    allEnvKeys: Object.keys(process.env).filter(k => k.includes("SUPABASE") || k.includes("TELEGRAM")),
+  });
+  
+  if (!supabaseUrl) {
+    console.error(`[CRON] NEXT_PUBLIC_SUPABASE_URL não está definido`);
+    return NextResponse.json(
+      { error: "NEXT_PUBLIC_SUPABASE_URL não está definido." },
+      { status: 500 },
+    );
+  }
+  
+  if (!serviceRoleKey) {
+    console.error(`[CRON] SUPABASE_SERVICE_ROLE_KEY não está definido`);
+    console.error(`[CRON] Available env vars:`, Object.keys(process.env).filter(k => k.includes("SUPABASE")));
+    return NextResponse.json(
+      { 
+        error: "SUPABASE_SERVICE_ROLE_KEY não está definido.",
+        hint: "Verifica as variáveis de ambiente no servidor (cPanel/LiteSpeed). As variáveis do .htaccess podem não estar a ser lidas pelo Node.js.",
+        debug: {
+          availableEnvVars: Object.keys(process.env).filter(k => k.includes("SUPABASE") || k.includes("TELEGRAM")),
+        }
+      },
+      { status: 500 },
+    );
+  }
+  
+  // Validar formato da API key (deve começar com sb_secret_ ou eyJ)
+  if (!serviceRoleKey.startsWith("sb_secret_") && !serviceRoleKey.startsWith("eyJ")) {
+    console.warn(`[CRON] SUPABASE_SERVICE_ROLE_KEY pode ter formato inválido (não começa com sb_secret_ ou eyJ)`);
+    console.warn(`[CRON] Key starts with: ${serviceRoleKey.substring(0, 20)}`);
+  }
+
   const supabase = createAdminSupabaseClient();
+  
+  // Testar se a conexão funciona fazendo uma query simples
+  try {
+    const { data: testData, error: testError } = await supabase
+      .from("profiles")
+      .select("id")
+      .limit(1);
+    
+    if (testError) {
+      console.error(`[CRON] Test query failed:`, testError);
+      // Se for erro de API key, dar mensagem mais específica
+      if (testError.message?.includes("API key") || testError.message?.includes("Unregistered")) {
+        return NextResponse.json({
+          error: "A chave de API do Supabase (SUPABASE_SERVICE_ROLE_KEY) não é válida ou não está registada.",
+          details: testError.message,
+          hint: testError.hint || "Verifica no Supabase Dashboard > Settings > API se a Service Role Key está correta.",
+          debug: {
+            errorCode: testError.code,
+            errorMessage: testError.message,
+            errorHint: testError.hint,
+          }
+        }, { status: 500 });
+      }
+    } else {
+      console.log(`[CRON] Test query successful - Supabase connection OK`);
+    }
+  } catch (testException) {
+    console.error(`[CRON] Exception testing Supabase connection:`, testException);
+    return NextResponse.json({
+      error: "Erro ao conectar ao Supabase.",
+      details: testException instanceof Error ? testException.message : String(testException),
+    }, { status: 500 });
+  }
   
   // Informações do ambiente do servidor
   const serverEnvironment = {
@@ -169,6 +245,25 @@ async function handleCron(forceUserId: string | null = null) {
 
   if (profilesError) {
     console.error(`[CRON] Database error:`, profilesError);
+    
+    // Se for erro de API key, dar mensagem mais clara
+    if (profilesError.message?.includes("API key") || profilesError.message?.includes("Unregistered")) {
+      console.error(`[CRON] Supabase API key error - check SUPABASE_SERVICE_ROLE_KEY environment variable`);
+      return NextResponse.json({ 
+        error: "Erro de configuração: SUPABASE_SERVICE_ROLE_KEY não está configurada corretamente.",
+        details: profilesError.message,
+        hint: "Verifica as variáveis de ambiente no servidor.",
+        debug: {
+          ...debugInfo,
+          queryError: {
+            message: profilesError.message,
+            hint: profilesError.hint,
+            code: profilesError.code,
+          },
+        }
+      }, { status: 500 });
+    }
+    
     return NextResponse.json({ 
       error: profilesError.message,
       debug: {
@@ -183,12 +278,70 @@ async function handleCron(forceUserId: string | null = null) {
   const profileRows = (profiles ?? []).filter((profile) => profile.id);
 
   if (profileRows.length === 0) {
+    // Se foi erro de API key, retornar erro específico
+    if (profilesError && (profilesError.message?.includes("API key") || profilesError.message?.includes("Unregistered"))) {
+      const executionTime = Date.now() - startTime;
+      return NextResponse.json({
+        error: "Erro de autenticação com Supabase: API key inválida ou não registada.",
+        details: profilesError.message,
+        hint: "Verifica se a SUPABASE_SERVICE_ROLE_KEY no .htaccess corresponde à chave atual no Supabase Dashboard.",
+        currentTime,
+        forceUserId: forceUserId ?? null,
+        processedUsers: 0,
+        sent: 0,
+        errors: [{
+          message: profilesError.message,
+          hint: profilesError.hint,
+        }],
+        debug: {
+          currentTimeFormatted: currentTime,
+          utcTime: now.toISOString(),
+          lisbonTimeString: formatter.format(now),
+          timeCalculation: debugInfo,
+          serverEnvironment,
+          queryDetails: {
+            ...debugInfo.queryDetails,
+            error: "API key inválida - não foi possível fazer queries à BD",
+          },
+          executionTime: `${executionTime}ms`,
+        },
+        message: "Não foi possível aceder à base de dados devido a erro de autenticação."
+      }, { status: 500 });
+    }
+    
     // Debug: buscar todos os alert_times para ver o que está na BD
     console.log(`[CRON] No profiles found, fetching all alert times for debug`);
-    const { data: allProfiles } = await supabase
+    const { data: allProfiles, error: allProfilesError } = await supabase
       .from("profiles")
       .select("id, alert_time, telegram_chat_id")
       .not("telegram_chat_id", "is", null);
+    
+    // Se também esta query falhar, retornar erro
+    if (allProfilesError) {
+      const executionTime = Date.now() - startTime;
+      return NextResponse.json({
+        error: "Erro ao aceder à base de dados.",
+        details: allProfilesError.message,
+        currentTime,
+        forceUserId: forceUserId ?? null,
+        processedUsers: 0,
+        sent: 0,
+        errors: [allProfilesError],
+        debug: {
+          currentTimeFormatted: currentTime,
+          utcTime: now.toISOString(),
+          lisbonTimeString: formatter.format(now),
+          timeCalculation: debugInfo,
+          serverEnvironment,
+          queryDetails: {
+            ...debugInfo.queryDetails,
+            debugQueryError: allProfilesError,
+          },
+          executionTime: `${executionTime}ms`,
+        },
+        message: "Não foi possível verificar os perfis na base de dados."
+      }, { status: 500 });
+    }
     
     const alertTimes = (allProfiles ?? []).map(p => ({
       userId: p.id,
