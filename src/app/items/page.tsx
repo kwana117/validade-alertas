@@ -9,6 +9,7 @@ import { EditItemName } from "@/app/items/edit-item-name";
 import { LocationFilterChips } from "@/app/items/location-filters";
 import { StickyFilterBar } from "@/app/items/sticky-filter-bar";
 import { TestItemButton } from "@/app/items/test-item-button";
+import { VoiceAddButton } from "@/app/items/voice-add-button";
 
 export const dynamic = "force-dynamic";
 
@@ -389,6 +390,8 @@ export default async function ItemsPage({ searchParams }: Props) {
           )}
         </section>
       )}
+
+      <VoiceAddButton />
     </div>
   );
 }
