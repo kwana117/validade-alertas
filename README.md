@@ -6,6 +6,17 @@ App web (MVP) para gerir prazos de validade de alimentos/itens domésticos com a
 
 `Gestão de validade de itens com Next.js, Supabase e alertas diários via Telegram.`
 
+## 📚 Documentação
+
+- `docs/APP_CONTEXT.md`
+- `docs/DEPLOY_CPANEL.md`
+- `docs/DEPLOY_DROPLET.md`
+- `docs/DOCUMENTACAO_PROJETO_2026-01-20.md`
+- `docs/FEATURE_PRODUTOS_FREQUENTES.md`
+- `docs/INCIDENTE_DEPLOY_2026-02-07.md`
+- `docs/SETUP_FREQUENT_ITEMS.md`
+- `docs/VOICE_TO_FIELDS_REFERENCIA.md`
+
 ## 🛠️ Stack
 
 - `Next.js 16` (App Router) + TypeScript
