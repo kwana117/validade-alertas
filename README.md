@@ -1,6 +1,10 @@
 # Validade Alertas
 
-MVP em Next.js (App Router) para gerir prazos de validade com Supabase Auth e alertas diários via Telegram.
+App web (MVP) para gerir prazos de validade de alimentos/itens domésticos com autenticação, tracking de estado e alertas diários via Telegram.
+
+## Descrição para GitHub
+
+`Gestão de validade de itens com Next.js, Supabase e alertas diários via Telegram.`
 
 ## Stack
 
@@ -8,6 +12,14 @@ MVP em Next.js (App Router) para gerir prazos de validade com Supabase Auth e al
 - Supabase Auth + Postgres (tabelas `profiles` e `items`)
 - Tailwind CSS (preset V4)
 - API Cron: `/api/cron/send-alerts` envia resumos diários por Telegram
+
+## Funcionalidades
+
+- Login e registo com Supabase Auth
+- Gestão de itens com data de validade e localização
+- Alteração de estado (`ativo`, `consumido`, `descartado`)
+- Configuração de `telegram_chat_id` por utilizador
+- Resumo diário por Telegram com itens a expirar e expirados
 
 ## Configuração
 

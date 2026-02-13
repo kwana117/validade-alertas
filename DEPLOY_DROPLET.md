@@ -61,7 +61,45 @@ crontab -l
 tail -f /var/log/syslog | grep CRON
 ```
 
-## Atualizar Aplicação
+## Fluxo de atualização (após alterações e commit)
+
+### 1. No teu computador (local)
+
+1. Fazer as alterações no código.
+2. Commit e push:
+   ```bash
+   git add .
+   git commit -m "descrição das alterações"
+   git push
+   ```
+
+### 2. No droplet (servidor)
+
+Entrar por SSH no droplet e **atualizar a app** de uma destas formas:
+
+**Opção A — Script (recomendado)**  
+Corre pull, install, build e restart do PM2 de uma vez:
+
+```bash
+cd /var/www/validade-alertas
+bash scripts/deploy-droplet.sh
+```
+
+**Opção B — Manual**
+
+```bash
+cd /var/www/validade-alertas
+git pull
+npm install
+npm run build
+pm2 restart validade-alertas --update-env
+```
+
+O `--update-env` faz o PM2 recarregar as variáveis do `ecosystem.config.js` (útil se alteraste env vars).
+
+---
+
+## Atualizar Aplicação (resumo)
 
 ```bash
 cd /var/www/validade-alertas
