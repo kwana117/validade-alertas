@@ -40,4 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 tmp/
-APP_CONTEXT.md
+/APP_CONTEXT.md
