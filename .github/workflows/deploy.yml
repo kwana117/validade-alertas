@@ -23,14 +23,7 @@ jobs:
 
       - name: Create Release Archive
         run: |
-          tar \
-            --exclude="release.tar.gz" \
-            --exclude=".git" \
-            --exclude=".github" \
-            --exclude="node_modules" \
-            --exclude=".next" \
-            --exclude=".env*" \
-            -czf release.tar.gz .
+          git archive --format=tar.gz --output=release.tar.gz HEAD
 
       - name: Upload Release Archive
         uses: appleboy/scp-action@v0.1.7
