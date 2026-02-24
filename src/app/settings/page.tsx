@@ -14,6 +14,15 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_OFFSETS = [7, 3, 1, 0];
 
+type SettingsProfile = {
+  telegram_chat_id?: string | number | null;
+  enable_item_test_button?: boolean | null;
+  alert_offsets_days?: number[] | null;
+  alert_include_expired?: boolean | null;
+  alert_expired_max_days?: number | null;
+  alert_time?: string | null;
+};
+
 async function updateTelegramAction(
   _prevState: SettingsState,
   formData: FormData,
@@ -165,11 +174,12 @@ export default async function SettingsPage() {
   }
 
   // First, try to load only columns that definitely exist
-  let { data: profile, error: profileError } = await supabase
+  const { data: baseProfile, error: profileError } = await supabase
     .from("profiles")
     .select("telegram_chat_id, enable_item_test_button")
     .eq("id", user.id)
     .maybeSingle();
+  let profile = (baseProfile ?? null) as SettingsProfile | null;
 
   // Try to load alert settings separately (they might not exist in old schemas)
   if (profile && !profileError) {
@@ -180,7 +190,7 @@ export default async function SettingsPage() {
       .maybeSingle();
     
     if (alertData) {
-      profile = { ...profile, ...alertData } as typeof profile & typeof alertData;
+      profile = { ...profile, ...alertData } as SettingsProfile;
     }
   }
 
@@ -199,17 +209,18 @@ export default async function SettingsPage() {
         .eq("id", user.id)
         .maybeSingle();
       
-      profile = { ...adminProfile, ...(adminAlertData ?? {}) } as typeof adminProfile & typeof adminAlertData;
+      profile = { ...adminProfile, ...(adminAlertData ?? {}) } as SettingsProfile;
     }
   }
 
+  const profileOffsets = profile?.alert_offsets_days;
   const alertOffsets =
-    (profile as any)?.alert_offsets_days && Array.isArray((profile as any).alert_offsets_days) && (profile as any).alert_offsets_days.length > 0
-      ? (profile as any).alert_offsets_days
+    Array.isArray(profileOffsets) && profileOffsets.length > 0
+      ? profileOffsets
       : DEFAULT_OFFSETS;
-  const alertIncludeExpired = (profile as any)?.alert_include_expired ?? true;
-  const alertExpiredMaxDays = (profile as any)?.alert_expired_max_days ?? 7;
-  const alertTime = (profile as any)?.alert_time ?? "09:00";
+  const alertIncludeExpired = profile?.alert_include_expired ?? true;
+  const alertExpiredMaxDays = profile?.alert_expired_max_days ?? 7;
+  const alertTime = profile?.alert_time ?? "09:00";
 
   return (
     <div className="space-y-8">

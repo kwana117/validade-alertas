@@ -6,13 +6,6 @@ import type { LocationType } from "@/lib/frequent-items";
 
 const MAX_RECORDING_MS = 90_000;
 
-type DraftItem = {
-  id: string;
-  name: string;
-  location: LocationType;
-  expires_at: string;
-};
-
 type ExtractedItem = {
   name?: string | null;
   location?: string | null;
@@ -51,9 +44,7 @@ export function VoiceAddButton() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [items, setItems] = useState<DraftItem[]>([]);
   const [recordingMs, setRecordingMs] = useState(0);
-  const [transcript, setTranscript] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -73,10 +64,8 @@ export function VoiceAddButton() {
     setIsRecording(false);
     setIsProcessing(false);
     setShowConfirm(false);
-    setItems([]);
     setError(null);
     setRecordingMs(0);
-    setTranscript(null);
   }, []);
 
   const stopStream = useCallback(() => {
@@ -98,7 +87,7 @@ export function VoiceAddButton() {
     mediaRecorderRef.current.stop();
   }, []);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = async () => {
     setError(null);
     if (!hasMediaSupport) {
       setError("O teu browser não suporta gravação de áudio.");
@@ -147,12 +136,11 @@ export function VoiceAddButton() {
       setError("Não foi possível aceder ao microfone.");
       stopStream();
     }
-  }, [clearTimer, hasMediaSupport, stopRecording, stopStream]);
+  };
 
-  const processAudio = useCallback(async (blob: Blob) => {
+  const processAudio = async (blob: Blob) => {
     setIsProcessing(true);
     setError(null);
-    setTranscript(null);
 
     try {
       const file = new File([blob], "voice-note.webm", { type: blob.type || "audio/webm" });
@@ -177,8 +165,6 @@ export function VoiceAddButton() {
         expires_at: (item.expires_at ?? "").toString(),
       }));
 
-      setTranscript(typeof data.transcript === "string" ? data.transcript : null);
-      setItems(draftItems);
       if (draftItems.length > 0) {
         try {
           sessionStorage.setItem(
@@ -201,7 +187,7 @@ export function VoiceAddButton() {
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     return () => {

@@ -11,25 +11,22 @@ type Props = {
 };
 
 export function SiteHeader({ hasSession, signOutAction }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpenPath, setMenuOpenPath] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
+  const menuOpen = menuOpenPath === pathname;
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
       if (!menuRef.current) return;
       if (!menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
+        setMenuOpenPath(null);
       }
     }
 
     function handleKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setMenuOpen(false);
+        setMenuOpenPath(null);
       }
     }
 
@@ -86,7 +83,11 @@ export function SiteHeader({ hasSession, signOutAction }: Props) {
               <div className="relative md:hidden" ref={menuRef}>
                 <button
                   type="button"
-                  onClick={() => setMenuOpen((open) => !open)}
+                  onClick={() =>
+                    setMenuOpenPath((openPath) =>
+                      openPath === pathname ? null : pathname,
+                    )
+                  }
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                   aria-label="Abrir menu"
                   aria-expanded={menuOpen}
@@ -112,25 +113,28 @@ export function SiteHeader({ hasSession, signOutAction }: Props) {
                       <Link
                         href="/items"
                         className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                        onClick={() => setMenuOpen(false)}
+                        onClick={() => setMenuOpenPath(null)}
                       >
                         Os meus itens
                       </Link>
                       <Link
                         href="/add?loc=fridge"
                         className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                        onClick={() => setMenuOpen(false)}
+                        onClick={() => setMenuOpenPath(null)}
                       >
                         Adicionar
                       </Link>
                       <Link
                         href="/settings"
                         className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                        onClick={() => setMenuOpen(false)}
+                        onClick={() => setMenuOpenPath(null)}
                       >
                         Definições
                       </Link>
-                      <form action={signOutAction} onSubmit={() => setMenuOpen(false)}>
+                      <form
+                        action={signOutAction}
+                        onSubmit={() => setMenuOpenPath(null)}
+                      >
                         <button
                           type="submit"
                           className="mt-2 w-full rounded-md bg-slate-900 px-3 py-2 text-left text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"

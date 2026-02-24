@@ -58,6 +58,15 @@ export function LoginForm({ action }: Props) {
         />
       </div>
 
+      <div className="text-right">
+        <Link
+          className="text-sm font-medium text-slate-700 underline dark:text-slate-300"
+          href="/login/recuperar-senha"
+        >
+          Esqueceste-te da palavra-passe?
+        </Link>
+      </div>
+
       {state.error ? (
         <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-200">
           {state.error}

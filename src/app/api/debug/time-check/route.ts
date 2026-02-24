@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 
+type TimeCalculationResult = {
+  result?: string | null;
+  [key: string]: unknown;
+};
+
+type TimeCalculations = {
+  method1?: TimeCalculationResult;
+  method2?: TimeCalculationResult;
+  method3?: TimeCalculationResult;
+  final?: string;
+};
+
 export async function GET() {
   const timestamp = new Date().toISOString();
   const now = new Date();
   const errors: Array<{ method: string; error: string }> = [];
-  const timeCalculations: any = {};
+  const timeCalculations: TimeCalculations = {};
 
   // Informações do ambiente do servidor
   const serverEnvironment = {

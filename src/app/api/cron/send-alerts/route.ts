@@ -10,6 +10,11 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("pt-PT", {
 
 const DEFAULT_OFFSETS = [7, 3, 1, 0];
 
+type CronDebugInfo = {
+  queryDetails: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const forceUserId = searchParams.get("force_user_id");
@@ -90,7 +95,7 @@ async function handleCron(forceUserId: string | null = null) {
   
   // Testar se a conexão funciona fazendo uma query simples
   try {
-    const { data: testData, error: testError } = await supabase
+    const { error: testError } = await supabase
       .from("profiles")
       .select("id")
       .limit(1);
@@ -135,9 +140,10 @@ async function handleCron(forceUserId: string | null = null) {
   // Obter a hora atual em formato HH:MM (Lisboa timezone)
   const now = new Date();
   let currentTime = "00:00";
-  let debugInfo: any = {
+  const debugInfo: CronDebugInfo = {
     serverEnvironment,
     executionStart: startTime,
+    queryDetails: {},
   };
   
   console.log(`[CRON] Calculating Lisbon time from UTC: ${now.toISOString()}`);

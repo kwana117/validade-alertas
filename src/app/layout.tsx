@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-async function signOutAction(_formData: FormData) {
+async function signOutAction() {
   "use server";
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();

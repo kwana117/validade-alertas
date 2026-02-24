@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     let parsed: { items?: Array<{ name?: string; expires_at?: string; location?: string }> };
     try {
       parsed = JSON.parse(content);
-    } catch (err) {
+    } catch {
       return NextResponse.json(
         { error: "Resposta inválida do modelo." },
         { status: 500 }

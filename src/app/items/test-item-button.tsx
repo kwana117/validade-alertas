@@ -38,7 +38,7 @@ export function TestItemButton({ itemId }: Props) {
 
       setStatus("success");
       setMessage("Teste enviado com sucesso.");
-    } catch (error) {
+    } catch {
       setStatus("error");
       setMessage("Falha de rede ao enviar o teste.");
     }

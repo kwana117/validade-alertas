@@ -26,7 +26,7 @@ export async function createServerSupabaseClient(): Promise<SupabaseClient> {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
-        } catch (error) {
+        } catch {
           // Cookies can only be modified in Server Actions or Route Handlers
           // During Server Component render, we silently ignore cookie updates
           // They will be handled properly in Server Actions/Route Handlers

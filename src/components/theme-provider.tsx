@@ -14,20 +14,19 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "va-theme";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
-
-  useEffect(() => {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") {
+      return "light";
+    }
     const stored = window.localStorage.getItem(STORAGE_KEY);
     const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")
       .matches;
-    const nextTheme: Theme =
-      stored === "dark" || stored === "light"
-        ? stored
-        : prefersDark
-          ? "dark"
-          : "light";
-    setThemeState(nextTheme);
-  }, []);
+    return stored === "dark" || stored === "light"
+      ? stored
+      : prefersDark
+        ? "dark"
+        : "light";
+  });
 
   useEffect(() => {
     const root = document.documentElement;

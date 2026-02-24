@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * Script para testar conexão ao Supabase diretamente no servidor

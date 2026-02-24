@@ -122,7 +122,7 @@ export function ProductAutocomplete({
     }
   };
 
-  const handleBlur = (e: React.FocusEvent) => {
+  const handleBlur = () => {
     // Delay closing to allow click on suggestion
     setTimeout(() => {
       if (!listRef.current?.contains(document.activeElement)) {

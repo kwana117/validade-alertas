@@ -21,7 +21,8 @@ export function ItemTestToggle({ enabled, action }: Props) {
             Ativar botões de teste por item (provisório)
           </p>
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            Mostra um botão "Enviar teste" em cada item para simular a mensagem de alerta.
+            Mostra um botão &quot;Enviar teste&quot; em cada item para simular a
+            mensagem de alerta.
           </p>
         </div>
         <label className="relative inline-flex cursor-pointer items-center">

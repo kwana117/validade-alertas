@@ -17,6 +17,87 @@ type Props = {
   action: (state: SettingsState, formData: FormData) => Promise<SettingsState>;
 };
 
+type TriggerErrorItem = { message?: string; [key: string]: unknown };
+
+type TriggerApiResponse = {
+  sent?: number;
+  error?: string;
+  hint?: string;
+  details?: string;
+  message?: string;
+  currentTime?: string;
+  debug?: { currentTimeFormatted?: string; [key: string]: unknown };
+  errors?: Array<TriggerErrorItem | string>;
+  [key: string]: unknown;
+};
+
+type DebugEntry = { stage?: string; error?: string; [key: string]: unknown };
+type DebugProfile = { alertTime?: string | null; matches?: boolean };
+type DebugServerEnvironment = {
+  timezone?: string;
+  locale?: string;
+  nodeVersion?: string;
+  environment?: string;
+  [key: string]: unknown;
+};
+type DebugTimeCalculation = {
+  method1?: {
+    parts?: unknown;
+    hoursPart?: { value?: string };
+    minutesPart?: { value?: string };
+    formatterResult?: string;
+    [key: string]: unknown;
+  };
+  method2?: {
+    lisbonString?: string;
+    [key: string]: unknown;
+  };
+  finalTime?: string;
+  fallback?: string;
+  error?: string;
+  [key: string]: unknown;
+};
+
+type DebugResponseBody = {
+  currentTime?: string;
+  error?: string;
+  message?: string;
+  debug?: {
+    serverEnvironment?: DebugServerEnvironment;
+    timeCalculation?: DebugTimeCalculation;
+    queryDetails?: Record<string, unknown>;
+    allProfiles?: DebugProfile[];
+    currentTimeFormatted?: string;
+    utcTime?: string;
+    lisbonTimeString?: string;
+  };
+  [key: string]: unknown;
+};
+
+type DebugSnapshot = {
+  timestamp: string;
+  request: {
+    url: string;
+    method: string;
+    environment: string;
+    isLocalhost: boolean;
+    startTime?: number;
+  };
+  response?: {
+    status?: number;
+    statusText?: string;
+    ok?: boolean;
+    headers?: Record<string, string>;
+    responseTime?: string;
+    bodySize?: string;
+    parsed?: boolean;
+    rawBody?: string;
+  };
+  responseData?: DebugResponseBody;
+  errors?: DebugEntry[];
+  [key: string]: unknown;
+};
+
 export function AlertSettingsForm({
   initialOffsets,
   initialIncludeExpired,
@@ -68,7 +149,7 @@ export function AlertSettingsForm({
   const [triggerResult, setTriggerResult] = useState<{ success?: string; error?: string } | null>(null);
   const [checkTimeLoading, setCheckTimeLoading] = useState(false);
   const [checkTimeResult, setCheckTimeResult] = useState<string | null>(null);
-  const [debugData, setDebugData] = useState<any>(null);
+  const [debugData, setDebugData] = useState<DebugSnapshot | null>(null);
   const [activeDebugTab, setActiveDebugTab] = useState<string>("summary");
 
   function toggleOffset(value: number) {
@@ -112,7 +193,7 @@ export function AlertSettingsForm({
     setTriggerResult(null);
     try {
       const response = await fetch(`/api/cron/send-alerts?force_user_id=${userId}`);
-      const data = await response.json();
+      const data = (await response.json()) as TriggerApiResponse;
       
       // Se houver erro HTTP ou erro na resposta
       if (!response.ok || data.error) {
@@ -123,10 +204,18 @@ export function AlertSettingsForm({
         return;
       }
       
-      if (data.sent > 0) {
-        setTriggerResult({ success: `✅ Notificação enviada com sucesso! (${data.sent} mensagem)` });
+      if ((data.sent ?? 0) > 0) {
+        setTriggerResult({
+          success: `✅ Notificação enviada com sucesso! (${data.sent ?? 0} mensagem)`,
+        });
       } else if (data.errors && data.errors.length > 0) {
-        const errorDetails = data.errors.map((e: any) => e.message || e).join(", ");
+        const errorDetails = data.errors
+          .map((entry) =>
+            typeof entry === "string"
+              ? entry
+              : entry.message ?? JSON.stringify(entry),
+          )
+          .join(", ");
         setTriggerResult({ error: `❌ Erro ao enviar: ${errorDetails}` });
       } else {
         const debugInfo = data.debug ? `\n\nDebug: Hora atual (Lisboa): ${data.debug.currentTimeFormatted || data.currentTime || "N/A"}` : '';
@@ -147,7 +236,7 @@ export function AlertSettingsForm({
     const timestamp = new Date().toISOString();
     const url = `/api/cron/send-alerts`;
     
-    let debugInfo: any = {
+    const debugInfo: DebugSnapshot = {
       timestamp,
       request: {
         url,
@@ -175,7 +264,9 @@ export function AlertSettingsForm({
       let responseText: string;
       try {
         responseText = await response.text();
-        debugInfo.response.bodySize = `${responseText.length} bytes`;
+        if (debugInfo.response) {
+          debugInfo.response.bodySize = `${responseText.length} bytes`;
+        }
       } catch (textError) {
         debugInfo.errors = debugInfo.errors || [];
         debugInfo.errors.push({
@@ -186,17 +277,21 @@ export function AlertSettingsForm({
       }
 
       // Tentar fazer parse do JSON
-      let data: any;
+      let data: DebugResponseBody;
       try {
-        data = JSON.parse(responseText);
-        debugInfo.response.parsed = true;
+        data = JSON.parse(responseText) as DebugResponseBody;
+        if (debugInfo.response) {
+          debugInfo.response.parsed = true;
+        }
       } catch (parseError) {
         debugInfo.errors = debugInfo.errors || [];
         debugInfo.errors.push({
           stage: "parsing_json",
           error: parseError instanceof Error ? parseError.message : String(parseError),
         });
-        debugInfo.response.rawBody = responseText;
+        if (debugInfo.response) {
+          debugInfo.response.rawBody = responseText;
+        }
         throw new Error(`Erro ao fazer parse do JSON: ${parseError instanceof Error ? parseError.message : String(parseError)}. Resposta raw: ${responseText.substring(0, 500)}`);
       }
 
@@ -272,10 +367,15 @@ export function AlertSettingsForm({
 
       if (data.debug?.queryDetails) {
         result += `[4] DATABASE QUERY\n`;
-        const qd = data.debug.queryDetails;
+        const qd = data.debug.queryDetails as {
+          queryType?: string;
+          profilesFound?: number;
+          alertTimes?: string[];
+          matches?: boolean;
+        };
         result += `  Query Type: ${qd.queryType || "N/A"}\n`;
         result += `  Profiles Found: ${qd.profilesFound || 0}\n`;
-        if (qd.alertTimes) {
+        if (Array.isArray(qd.alertTimes)) {
           result += `  Alert Times in DB: [${qd.alertTimes.join(", ")}]\n`;
         }
         if (qd.matches !== undefined) {
@@ -286,7 +386,7 @@ export function AlertSettingsForm({
 
       if (data.debug?.allProfiles) {
         result += `[5] PROFILES IN DATABASE\n`;
-        data.debug.allProfiles.forEach((p: any) => {
+        data.debug.allProfiles.forEach((p: DebugProfile) => {
           result += `  - ${p.alertTime} ${p.matches ? "✓ CORRESPONDE" : "✗ não corresponde"}\n`;
         });
         result += `\n`;
@@ -297,7 +397,7 @@ export function AlertSettingsForm({
 
       if (debugInfo.errors && debugInfo.errors.length > 0) {
         result += `[7] ERRORS\n`;
-        debugInfo.errors.forEach((err: any, idx: number) => {
+        debugInfo.errors.forEach((err: DebugEntry, idx: number) => {
           result += `  Error ${idx + 1}: ${err.stage || "unknown"}\n`;
           result += `    - ${err.error || JSON.stringify(err)}\n`;
         });
@@ -315,8 +415,10 @@ export function AlertSettingsForm({
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      debugInfo.response = debugInfo.response || {};
-      debugInfo.response.responseTime = `${responseTime.toFixed(2)}ms`;
+      debugInfo.response = {
+        ...(debugInfo.response ?? {}),
+        responseTime: `${responseTime.toFixed(2)}ms`,
+      };
       
       setDebugData(debugInfo);
       
@@ -590,8 +692,23 @@ export function AlertSettingsForm({
               setDebugData(null);
               try {
                 const response = await fetch(`/api/debug/time-check`);
-                const data = await response.json();
-                setDebugData({ responseData: data, timestamp: new Date().toISOString() });
+                const data = (await response.json()) as DebugResponseBody;
+                setDebugData({
+                  responseData: data,
+                  timestamp: new Date().toISOString(),
+                  request: {
+                    url: "/api/debug/time-check",
+                    method: "GET",
+                    environment:
+                      typeof window !== "undefined"
+                        ? window.location.hostname
+                        : "server",
+                    isLocalhost:
+                      typeof window !== "undefined"
+                        ? window.location.hostname === "localhost"
+                        : false,
+                  },
+                });
                 setCheckTimeResult(`=== DEBUG TIME CHECK ===\n${JSON.stringify(data, null, 2)}`);
               } catch (error) {
                 setCheckTimeResult(`Erro: ${error instanceof Error ? error.message : String(error)}`);
@@ -710,7 +827,7 @@ export function AlertSettingsForm({
                         <div>
                           <span className="font-semibold">Horas configuradas:</span>
                           <ul className="list-disc list-inside mt-1">
-                            {debugData.responseData.debug.allProfiles.map((p: any, idx: number) => (
+                            {debugData.responseData.debug.allProfiles.map((p: DebugProfile, idx: number) => (
                               <li key={idx}>
                                 {p.alertTime} {p.matches ? "✓" : "✗"}
                               </li>

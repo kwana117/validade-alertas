@@ -31,7 +31,7 @@ export function TestTelegramButton() {
 
       setStatus("success");
       setMessage("Mensagem enviada com sucesso.");
-    } catch (error) {
+    } catch {
       setStatus("error");
       setMessage("Falha de rede ao testar o Telegram.");
     }
