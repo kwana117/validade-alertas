@@ -1,0 +1,118 @@
+name: Deploy To Hetzner
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: ${{ vars.APP_NAME || 'validade-alertas' }}
+      APP_DIR: ${{ vars.APP_DIR || '/var/www/validade-alertas' }}
+      APP_PORT: ${{ vars.APP_PORT || '3000' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Release Archive
+        run: |
+          tar \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="node_modules" \
+            --exclude=".next" \
+            --exclude=".env*" \
+            -czf release.tar.gz .
+
+      - name: Upload Release Archive
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: ${{ secrets.DROPLET_PORT || 22 }}
+          source: release.tar.gz
+          target: /tmp
+
+      - name: Deploy On Server
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_NAME: ${{ env.APP_NAME }}
+          APP_DIR: ${{ env.APP_DIR }}
+          APP_PORT: ${{ env.APP_PORT }}
+          RELEASE_SHA: ${{ github.sha }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: ${{ secrets.DROPLET_PORT || 22 }}
+          envs: APP_NAME,APP_DIR,APP_PORT,RELEASE_SHA,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,TELEGRAM_BOT_TOKEN
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            # Server bootstrap (idempotente)
+            if ! command -v curl >/dev/null 2>&1; then
+              apt-get update
+              apt-get install -y curl ca-certificates
+            fi
+
+            if ! command -v git >/dev/null 2>&1; then
+              apt-get update
+              apt-get install -y git
+            fi
+
+            if ! command -v node >/dev/null 2>&1; then
+              curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+              apt-get install -y nodejs
+            fi
+
+            if ! command -v pm2 >/dev/null 2>&1; then
+              npm install -g pm2
+            fi
+
+            RELEASES_DIR="${APP_DIR}/releases"
+            CURRENT_DIR="${APP_DIR}/current"
+            RELEASE_DIR="${RELEASES_DIR}/${RELEASE_SHA}"
+
+            mkdir -p "${RELEASE_DIR}"
+            tar -xzf /tmp/release.tar.gz -C "${RELEASE_DIR}"
+
+            cat > "${RELEASE_DIR}/.env.production" <<EOF
+            NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+            SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+            TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+            EOF
+            chmod 600 "${RELEASE_DIR}/.env.production"
+
+            cd "${RELEASE_DIR}"
+            npm ci
+            npm run build
+
+            ln -sfn "${RELEASE_DIR}" "${CURRENT_DIR}"
+
+            if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
+              pm2 delete "${APP_NAME}"
+            fi
+            pm2 start npm --name "${APP_NAME}" --cwd "${CURRENT_DIR}" -- run start -- -H 0.0.0.0 -p "${APP_PORT}"
+
+            pm2 save
+            rm -f /tmp/release.tar.gz
+
+            # Mantem apenas as 3 releases mais recentes.
+            if [ -d "${RELEASES_DIR}" ]; then
+              cd "${RELEASES_DIR}"
+              ls -1dt */ 2>/dev/null | tail -n +4 | xargs -r rm -rf
+            fi
