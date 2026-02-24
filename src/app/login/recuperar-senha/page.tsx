@@ -47,6 +47,17 @@ async function recoverPasswordAction(
   });
 
   if (error) {
+    const message = error.message.toLowerCase();
+    if (
+      message.includes("email rate limit exceeded") ||
+      message.includes("rate limit")
+    ) {
+      return {
+        error:
+          "Atingiste o limite de emails de recuperação. Tenta novamente daqui a 1 hora.",
+      };
+    }
+
     return {
       error:
         "Não foi possível enviar o email de recuperação. Tenta novamente.",
