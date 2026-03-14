@@ -1,9 +1,10 @@
-name: Deploy To Hetzner
+name: Deploy To MacMini
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency:
   group: deploy-production
@@ -12,101 +13,130 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     env:
       APP_NAME: ${{ vars.APP_NAME || 'validade-alertas' }}
-      APP_DIR: ${{ vars.APP_DIR || '/var/www/validade-alertas' }}
-      APP_PORT: ${{ vars.APP_PORT || '3000' }}
+      APP_DIR: ${{ vars.APP_DIR || '/Users/zion/apps/validade-alertas' }}
+      APP_PORT: ${{ vars.APP_PORT || '3020' }}
+      KEEP_RELEASES: ${{ vars.KEEP_RELEASES || '5' }}
+      NODE_VERSION: ${{ vars.NODE_VERSION || '20' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create Release Archive
-        run: |
-          git archive --format=tar.gz --output=release.tar.gz HEAD
-
-      - name: Upload Release Archive
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DROPLET_HOST }}
-          username: ${{ secrets.DROPLET_USER }}
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          port: ${{ secrets.DROPLET_PORT || 22 }}
-          source: release.tar.gz
-          target: /tmp
-
-      - name: Deploy On Server
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Prepare SSH key
+        shell: bash
         env:
-          APP_NAME: ${{ env.APP_NAME }}
-          APP_DIR: ${{ env.APP_DIR }}
-          APP_PORT: ${{ env.APP_PORT }}
-          RELEASE_SHA: ${{ github.sha }}
+          DROPLET_SSH_KEY_B64: ${{ secrets.DROPLET_SSH_KEY_B64 }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          if [ -n "${DROPLET_SSH_KEY_B64:-}" ]; then
+            printf "%s" "$DROPLET_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+          else
+            printf "%s" "${DROPLET_SSH_KEY:-}" | tr -d '\r' > ~/.ssh/deploy_key
+          fi
+          chmod 600 ~/.ssh/deploy_key
+          if ! ssh-keygen -y -f ~/.ssh/deploy_key >/dev/null 2>&1; then
+            echo "Invalid SSH key. Set DROPLET_SSH_KEY_B64 from local key file (recommended), or paste full DROPLET_SSH_KEY."
+            exit 1
+          fi
+          ssh-keyscan -p "${{ secrets.DROPLET_PORT || '22' }}" -H "${{ secrets.DROPLET_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Build release bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE_PATH="/tmp/release-${{ github.sha }}.tar.gz"
+          tar \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=node_modules \
+            --exclude=.next \
+            --exclude=.env* \
+            --exclude=release.tar.gz \
+            -czf "$ARCHIVE_PATH" .
+
+      - name: Upload release bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE_PATH="/tmp/release-${{ github.sha }}.tar.gz"
+          scp \
+            -P "${{ secrets.DROPLET_PORT || '22' }}" \
+            -i ~/.ssh/deploy_key \
+            "$ARCHIVE_PATH" \
+            "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/tmp/${{ github.sha }}.tar.gz"
+          rm -f "$ARCHIVE_PATH"
+
+      - name: Deploy on server
+        shell: bash
+        env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        with:
-          host: ${{ secrets.DROPLET_HOST }}
-          username: ${{ secrets.DROPLET_USER }}
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          port: ${{ secrets.DROPLET_PORT || 22 }}
-          envs: APP_NAME,APP_DIR,APP_PORT,RELEASE_SHA,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,TELEGRAM_BOT_TOKEN
-          script_stop: true
-          script: |
-            set -euo pipefail
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_TEXT_MODEL: ${{ vars.OPENAI_TEXT_MODEL }}
+        run: |
+          set -euo pipefail
 
-            # Server bootstrap (idempotente)
-            if ! command -v curl >/dev/null 2>&1; then
-              apt-get update
-              apt-get install -y curl ca-certificates
-            fi
+          ssh -p "${{ secrets.DROPLET_PORT || '22' }}" -i ~/.ssh/deploy_key "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}" \
+            "APP_NAME='${APP_NAME}' APP_DIR='${APP_DIR}' APP_PORT='${APP_PORT}' KEEP_RELEASES='${KEEP_RELEASES}' NODE_VERSION='${NODE_VERSION}' RELEASE_SHA='${{ github.sha }}' NEXT_PUBLIC_SUPABASE_URL='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | sed "s/'/'\\''/g")' NEXT_PUBLIC_SUPABASE_ANON_KEY='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | sed "s/'/'\\''/g")' SUPABASE_SERVICE_ROLE_KEY='$(printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | sed "s/'/'\\''/g")' TELEGRAM_BOT_TOKEN='$(printf '%s' "$TELEGRAM_BOT_TOKEN" | sed "s/'/'\\''/g")' OPENAI_API_KEY='$(printf '%s' "$OPENAI_API_KEY" | sed "s/'/'\\''/g")' OPENAI_TEXT_MODEL='$(printf '%s' "$OPENAI_TEXT_MODEL" | sed "s/'/'\\''/g")' bash -s" <<'REMOTE'
+          set -euo pipefail
 
-            if ! command -v git >/dev/null 2>&1; then
-              apt-get update
-              apt-get install -y git
-            fi
+          export PATH="/opt/homebrew/bin:/opt/homebrew/opt/node@$NODE_VERSION/bin:$PATH"
+          command -v node >/dev/null 2>&1 || { echo "node is required on server."; exit 1; }
+          command -v npm >/dev/null 2>&1 || { echo "npm is required on server."; exit 1; }
+          command -v pm2 >/dev/null 2>&1 || { echo "pm2 is required on server."; exit 1; }
 
-            if ! command -v node >/dev/null 2>&1; then
-              curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-              apt-get install -y nodejs
-            fi
+          mkdir -p "$APP_DIR/releases" "$APP_DIR/shared"
+          RELEASE_DIR="$APP_DIR/releases/$RELEASE_SHA"
+          ARCHIVE_PATH="/tmp/$RELEASE_SHA.tar.gz"
 
-            if ! command -v pm2 >/dev/null 2>&1; then
-              npm install -g pm2
-            fi
+          rm -rf "$RELEASE_DIR"
+          mkdir -p "$RELEASE_DIR"
+          tar -xzf "$ARCHIVE_PATH" -C "$RELEASE_DIR"
+          rm -f "$ARCHIVE_PATH"
 
-            RELEASES_DIR="${APP_DIR}/releases"
-            CURRENT_DIR="${APP_DIR}/current"
-            RELEASE_DIR="${RELEASES_DIR}/${RELEASE_SHA}"
+          cat > "$APP_DIR/shared/.env.production" <<ENV
+          NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+          TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
+          OPENAI_API_KEY=$OPENAI_API_KEY
+          OPENAI_TEXT_MODEL=$OPENAI_TEXT_MODEL
+          ENV
+          chmod 600 "$APP_DIR/shared/.env.production"
 
-            mkdir -p "${RELEASE_DIR}"
-            tar -xzf /tmp/release.tar.gz -C "${RELEASE_DIR}"
+          ln -sfn "$APP_DIR/shared/.env.production" "$RELEASE_DIR/.env.production"
 
-            cat > "${RELEASE_DIR}/.env.production" <<EOF
-            NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-            SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-            TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-            EOF
-            chmod 600 "${RELEASE_DIR}/.env.production"
+          cd "$RELEASE_DIR"
+          npm ci
+          npm run build
 
-            cd "${RELEASE_DIR}"
-            npm ci
-            npm run build
+          ln -sfn "$RELEASE_DIR" "$APP_DIR/current"
 
-            ln -sfn "${RELEASE_DIR}" "${CURRENT_DIR}"
+          if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+            pm2 delete "$APP_NAME"
+          fi
+          pm2 start npm --name "$APP_NAME" --cwd "$APP_DIR/current" -- run start -- -H 127.0.0.1 -p "$APP_PORT"
+          pm2 save
 
-            if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
-              pm2 delete "${APP_NAME}"
-            fi
-            pm2 start npm --name "${APP_NAME}" --cwd "${CURRENT_DIR}" -- run start -- -H 0.0.0.0 -p "${APP_PORT}"
+          sleep 2
+          curl -fsS "http://127.0.0.1:$APP_PORT/validades/login" >/dev/null
 
-            pm2 save
-            rm -f /tmp/release.tar.gz
+          old_releases="$(ls -1dt "$APP_DIR/releases"/* 2>/dev/null | tail -n +"$((KEEP_RELEASES + 1))" || true)"
+          if [ -n "$old_releases" ]; then
+            printf '%s\n' "$old_releases" | while IFS= read -r rel; do
+              rm -rf "$rel"
+            done
+          fi
+          REMOTE
 
-            # Mantem apenas as 3 releases mais recentes.
-            if [ -d "${RELEASES_DIR}" ]; then
-              cd "${RELEASES_DIR}"
-              ls -1dt */ 2>/dev/null | tail -n +4 | xargs -r rm -rf
-            fi
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
