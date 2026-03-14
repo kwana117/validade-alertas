@@ -45,7 +45,7 @@ jobs:
           if [ -n "${DROPLET_SSH_KEY_B64:-}" ]; then
             printf "%s" "$DROPLET_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
           else
-            printf "%s" "${DROPLET_SSH_KEY:-}" | tr -d '\r' > ~/.ssh/deploy_key
+            printf "%b" "${DROPLET_SSH_KEY:-}" | tr -d '\r' > ~/.ssh/deploy_key
           fi
           chmod 600 ~/.ssh/deploy_key
           if ! ssh-keygen -y -f ~/.ssh/deploy_key >/dev/null 2>&1; then
