@@ -18,16 +18,19 @@ type Props = {
 export function AddItemForm({ action, defaultLocation }: Props) {
   const searchParams = useSearchParams();
   const presetLocation = (searchParams.get("loc") ?? defaultLocation) as LocationType;
+  const presetCategory = searchParams.get("cat") === "saude" ? "saude" : "alimentar" as CategoryType;
 
   const [state, formAction] = useActionState(action, initialAddItemState);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Category state
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>("alimentar");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>(presetCategory);
 
   // New state for product name and autocomplete
   const [productName, setProductName] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<LocationType>(presetLocation);
+  const [selectedLocation, setSelectedLocation] = useState<LocationType>(
+    presetCategory === "saude" ? ("geral" as LocationType) : presetLocation
+  );
 
   // New state for validity input
   const [inputMode, setInputMode] = useState<InputMode>("date");
