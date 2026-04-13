@@ -1,6 +1,6 @@
 export type InputMode = "date" | "duration";
 
-export type LocationType = "fridge" | "freezer" | "pantry";
+export type LocationType = "fridge" | "freezer" | "pantry" | "geral";
 
 export interface FrequentItem {
   id: string;
@@ -68,6 +68,10 @@ export const DEFAULT_PRODUCTS: Record<LocationType, ProductSuggestion[]> = {
     { id: "default-bolachas", name: "Bolachas", input_mode: "date", default_duration_days: null, isFrequent: false },
     { id: "default-azeite", name: "Azeite", input_mode: "date", default_duration_days: null, isFrequent: false },
     { id: "default-especiarias", name: "Especiarias", input_mode: "date", default_duration_days: null, isFrequent: false },
+  ],
+  geral: [
+    { id: "default-medicamento", name: "Medicamento", input_mode: "date", default_duration_days: null, isFrequent: false },
+    { id: "default-suplemento", name: "Suplemento", input_mode: "date", default_duration_days: null, isFrequent: false },
   ],
 };
 

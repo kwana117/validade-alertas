@@ -390,7 +390,7 @@ async function handleCron(forceUserId: string | null = null) {
 
   const { data: items, error: itemsError } = await supabase
     .from("items")
-    .select("id,name,expires_at,location,user_id,status")
+    .select("id,name,expires_at,location,category,user_id,status")
     .eq("status", "active")
     .gte("expires_at", format(minDate, "yyyy-MM-dd"))
     .lte("expires_at", format(maxDate, "yyyy-MM-dd"))
@@ -403,7 +403,7 @@ async function handleCron(forceUserId: string | null = null) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
-  type BucketItem = { name: string; expires_at: string; location: string };
+  type BucketItem = { name: string; expires_at: string; location: string; category: string };
 
   const grouped = new Map<
     string,
@@ -452,6 +452,7 @@ async function handleCron(forceUserId: string | null = null) {
         name: item.name,
         expires_at: item.expires_at,
         location: item.location,
+        category: item.category ?? "alimentar",
       });
       continue;
     }
@@ -463,6 +464,7 @@ async function handleCron(forceUserId: string | null = null) {
           name: item.name,
           expires_at: item.expires_at,
           location: item.location,
+          category: item.category ?? "alimentar",
         });
       }
     }
@@ -474,27 +476,24 @@ async function handleCron(forceUserId: string | null = null) {
   for (const [userId, info] of grouped.entries()) {
     const orderedOffsets = [...new Set(info.offsets)].sort((a, b) => b - a);
 
+    const formatItemLine = (item: BucketItem) => {
+      if (item.category === "saude") {
+        return `- ${item.name} – ${DATE_FORMATTER.format(new Date(item.expires_at))}`;
+      }
+      return `- ${item.name} (${formatLocationLabel(item.location)}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`;
+    };
+
     const sections = orderedOffsets
       .map((offset) => {
         const itemsForOffset = info.buckets.get(offset) ?? [];
         if (itemsForOffset.length === 0) return null;
-        const lines = itemsForOffset
-          .map(
-            (item) =>
-              `- ${item.name} (${formatLocationLabel(item.location)}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`,
-          )
-          .join("\n");
+        const lines = itemsForOffset.map(formatItemLine).join("\n");
         return `${offsetLabel(offset)}:\n${lines}`;
       })
       .filter((section): section is string => Boolean(section));
 
     if (info.includeExpired && info.expired.length > 0) {
-      const lines = info.expired
-        .map(
-          (item) =>
-            `- ${item.name} (${formatLocationLabel(item.location)}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`,
-        )
-        .join("\n");
+      const lines = info.expired.map(formatItemLine).join("\n");
       sections.push(`Já expiraram:\n${lines}`);
     }
 
@@ -503,8 +502,14 @@ async function handleCron(forceUserId: string | null = null) {
       continue;
     }
 
+    // Determinar emoji do header com base nas categorias presentes
+    const allItems = [...orderedOffsets.flatMap(o => info.buckets.get(o) ?? []), ...info.expired];
+    const hasFood = allItems.some(i => i.category !== "saude");
+    const hasHealth = allItems.some(i => i.category === "saude");
+    const headerEmoji = hasFood && hasHealth ? "🍎💊" : hasHealth ? "💊" : "🍎";
+
     const text =
-      "🥩 Validades a acompanhar:\n\n" +
+      `${headerEmoji} Validades a acompanhar:\n\n` +
       sections.join("\n\n") +
       "\n\nMantém a lista atualizada para evitar desperdício.";
 

@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useActionState, useState, useCallback } from "react";
 import type { AddItemState } from "./types";
 import { initialAddItemState } from "./types";
-import { LOCATIONS, formatLocationLabel } from "@/lib/items";
+import { LOCATIONS, CATEGORIES, formatLocationLabel, formatCategoryLabel, type CategoryType } from "@/lib/items";
 import { ProductAutocomplete } from "./product-autocomplete";
 import { ValidityInput } from "./validity-input";
 import type { InputMode, LocationType, ProductSuggestion } from "@/lib/frequent-items";
@@ -21,6 +21,9 @@ export function AddItemForm({ action, defaultLocation }: Props) {
 
   const [state, formAction] = useActionState(action, initialAddItemState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Category state
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>("alimentar");
 
   // New state for product name and autocomplete
   const [productName, setProductName] = useState("");
@@ -72,28 +75,59 @@ export function AddItemForm({ action, defaultLocation }: Props) {
 
   return (
     <form action={handleSubmit} className="space-y-6">
-      {/* Quick location buttons */}
+      {/* Category tabs */}
       <div className="space-y-3">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Localização
+          Categoria
         </label>
-        <div className="flex flex-wrap gap-2">
-          {LOCATIONS.map((loc) => (
+        <div className="flex gap-2">
+          {CATEGORIES.map((cat) => (
             <button
-              key={loc.value}
+              key={cat.value}
               type="button"
-              onClick={() => handleLocationChange(loc.value as LocationType)}
+              onClick={() => {
+                setSelectedCategory(cat.value as CategoryType);
+                if (cat.value === "saude") handleLocationChange("geral" as LocationType);
+                else handleLocationChange(presetLocation);
+              }}
               className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                selectedLocation === loc.value
+                selectedCategory === cat.value
                   ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
                   : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               }`}
             >
-              {formatLocationLabel(loc.value)}
+              {cat.emoji} {cat.label}
             </button>
           ))}
         </div>
       </div>
+
+      <input type="hidden" name="category" value={selectedCategory} />
+
+      {/* Quick location buttons — só para alimentar */}
+      {selectedCategory === "alimentar" && (
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Localização
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {LOCATIONS.map((loc) => (
+              <button
+                key={loc.value}
+                type="button"
+                onClick={() => handleLocationChange(loc.value as LocationType)}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                  selectedLocation === loc.value
+                    ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                }`}
+              >
+                {formatLocationLabel(loc.value)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Hidden input for form submission */}
       <input type="hidden" name="location" value={selectedLocation} />

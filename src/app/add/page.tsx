@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { AddItemState } from "./types";
 import { AddItemForm } from "./add-form";
-import { LOCATIONS, formatLocationLabel } from "@/lib/items";
+import { LOCATIONS, formatLocationLabel, type CategoryType } from "@/lib/items";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +22,18 @@ async function addItemAction(
   const name = formData.get("name")?.toString().trim();
   const expiresAt = formData.get("expires_at")?.toString();
   const location = formData.get("location")?.toString();
+  const category = (formData.get("category")?.toString() ?? "alimentar") as CategoryType;
 
   if (!name || !expiresAt || !location) {
     return { error: "Preenche todos os campos." };
   }
 
-  if (!isLocationValue(location)) {
+  const validCategories: CategoryType[] = ["alimentar", "saude"];
+  if (!validCategories.includes(category)) {
+    return { error: "Categoria inválida." };
+  }
+
+  if (category === "alimentar" && !isLocationValue(location)) {
     return { error: "Local inválido." };
   }
 
@@ -44,6 +50,7 @@ async function addItemAction(
     name,
     expires_at: expiresAt,
     location,
+    category,
     status: "active",
     user_id: user.id,
   });

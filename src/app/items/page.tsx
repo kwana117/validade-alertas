@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { LOCATIONS, STATUS_CLASSES, STATUS_LABELS, formatLocationLabel } from "@/lib/items";
+import { LOCATIONS, CATEGORIES, STATUS_CLASSES, STATUS_LABELS, formatLocationLabel, formatCategoryLabel, type CategoryType } from "@/lib/items";
 import { DeleteItemForm } from "@/app/items/delete-item-form";
 import { EditItemName } from "@/app/items/edit-item-name";
 import { LocationFilterChips } from "@/app/items/location-filters";
@@ -18,6 +18,7 @@ type PantryItem = {
   name: string;
   expires_at: string;
   location: string;
+  category: string;
   status: string;
   updated_at?: string | null;
 };
@@ -112,6 +113,7 @@ type Props = {
   searchParams?: Promise<{
     tab?: string;
     loc?: string;
+    cat?: string;
   }>;
 };
 
@@ -132,6 +134,8 @@ export default async function ItemsPage({ searchParams }: Props) {
   const locationFilter = LOCATIONS.some((loc) => loc.value === locationParam)
     ? locationParam
     : "";
+  const catParam = resolvedSearchParams?.cat;
+  const categoryFilter = (CATEGORIES.some((c) => c.value === catParam) ? catParam : "") as CategoryType | "";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -153,9 +157,12 @@ export default async function ItemsPage({ searchParams }: Props) {
 
   const itemsList = (items as PantryItem[] | null) ?? [];
   const activeItems = itemsList.filter((item) => item.status === "active");
-  const filteredActiveItems = locationFilter
-    ? activeItems.filter((item) => item.location === locationFilter)
+  const categoryFilteredItems = categoryFilter
+    ? activeItems.filter((item) => item.category === categoryFilter)
     : activeItems;
+  const filteredActiveItems = locationFilter
+    ? categoryFilteredItems.filter((item) => item.location === locationFilter)
+    : categoryFilteredItems;
   const archivedItems = itemsList
     .filter((item) => item.status !== "active")
     .slice()
@@ -190,6 +197,12 @@ export default async function ItemsPage({ searchParams }: Props) {
                 + {formatLocationLabel(location.value)}
               </Link>
             ))}
+            <Link
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+              href="/add?cat=saude"
+            >
+              + 💊 Saúde
+            </Link>
           </div>
         </div>
       </section>
@@ -209,27 +222,56 @@ export default async function ItemsPage({ searchParams }: Props) {
                 Recebes alertas aos 3 dias, 1 dia, no próprio dia e após expirar.
               </p>
             </div>
-            <div className="inline-flex w-fit flex-wrap items-center gap-2 self-start rounded-full border border-slate-200 bg-white text-sm font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-              <Link
-                href={locationFilter ? `/items?loc=${locationFilter}` : "/items"}
-                className={`rounded-full px-4 py-2 transition ${
-                  activeTab === "active"
-                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                    : "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                }`}
-              >
-                Ativos ({activeItems.length})
-              </Link>
-              <Link
-                href="/items?tab=archived"
-                className={`rounded-full px-4 py-2 transition ${
-                  activeTab === "archived"
-                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                    : "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                }`}
-              >
-                Arquivados ({archivedItems.length})
-              </Link>
+            <div className="flex flex-wrap gap-2">
+              <div className="inline-flex w-fit flex-wrap items-center gap-2 self-start rounded-full border border-slate-200 bg-white text-sm font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                <Link
+                  href={locationFilter ? `/items?loc=${locationFilter}` : "/items"}
+                  className={`rounded-full px-4 py-2 transition ${
+                    activeTab === "active"
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                      : "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  }`}
+                >
+                  Ativos ({activeItems.length})
+                </Link>
+                <Link
+                  href="/items?tab=archived"
+                  className={`rounded-full px-4 py-2 transition ${
+                    activeTab === "archived"
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                      : "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  }`}
+                >
+                  Arquivados ({archivedItems.length})
+                </Link>
+              </div>
+              {activeTab === "active" && (
+                <div className="inline-flex w-fit flex-wrap items-center gap-1 self-start rounded-full border border-slate-200 bg-white text-sm font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                  <Link
+                    href="/items"
+                    className={`rounded-full px-4 py-2 transition ${
+                      !categoryFilter
+                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                        : "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    }`}
+                  >
+                    Todos
+                  </Link>
+                  {CATEGORIES.map((cat) => (
+                    <Link
+                      key={cat.value}
+                      href={`/items?cat=${cat.value}`}
+                      className={`rounded-full px-4 py-2 transition ${
+                        categoryFilter === cat.value
+                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                          : "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      }`}
+                    >
+                      {cat.emoji} {cat.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
             {activeTab === "active" && locationFilter ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -238,9 +280,11 @@ export default async function ItemsPage({ searchParams }: Props) {
               </p>
             ) : null}
           </header>
-          <StickyFilterBar>
-            <LocationFilterChips activeTab={activeTab} />
-          </StickyFilterBar>
+          {(!categoryFilter || categoryFilter === "alimentar") && (
+            <StickyFilterBar>
+              <LocationFilterChips activeTab={activeTab} />
+            </StickyFilterBar>
+          )}
 
           {activeTab === "archived" ? (
             archivedItems.length === 0 ? (
@@ -318,7 +362,9 @@ export default async function ItemsPage({ searchParams }: Props) {
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        {formatLocationLabel(item.location)}
+                        {item.category === "saude"
+                          ? formatCategoryLabel(item.category)
+                          : formatLocationLabel(item.location)}
                       </p>
                       <EditItemName
                         itemId={item.id}

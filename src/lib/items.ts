@@ -1,3 +1,26 @@
+export const CATEGORIES = [
+  { value: "alimentar", label: "Alimentar", emoji: "🍎" },
+  { value: "saude", label: "Saúde", emoji: "💊" },
+] as const;
+
+export type CategoryType = (typeof CATEGORIES)[number]["value"];
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  alimentar: "Alimentar",
+  saude: "Saúde",
+};
+
+export const CATEGORY_EMOJIS: Record<string, string> = {
+  alimentar: "🍎",
+  saude: "💊",
+};
+
+export function formatCategoryLabel(category: string) {
+  const label = CATEGORY_LABELS[category] ?? category;
+  const emoji = CATEGORY_EMOJIS[category];
+  return emoji ? `${emoji} ${label}` : label;
+}
+
 export const LOCATIONS = [
   { value: "fridge", label: "Frigorífico" },
   { value: "freezer", label: "Congelador" },
