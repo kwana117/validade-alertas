@@ -403,7 +403,7 @@ async function handleCron(forceUserId: string | null = null) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
-  type BucketItem = { name: string; expires_at: string; location: string; category: string };
+  type BucketItem = { id: string; name: string; expires_at: string; location: string; category: string };
 
   const grouped = new Map<
     string,
@@ -449,6 +449,7 @@ async function handleCron(forceUserId: string | null = null) {
 
     if (diff >= 0 && entry.buckets.has(diff)) {
       entry.buckets.get(diff)?.push({
+        id: item.id,
         name: item.name,
         expires_at: item.expires_at,
         location: item.location,
@@ -461,6 +462,7 @@ async function handleCron(forceUserId: string | null = null) {
       const daysExpired = Math.abs(diff);
       if (daysExpired <= entry.expiredMaxDays) {
         entry.expired.push({
+          id: item.id,
           name: item.name,
           expires_at: item.expires_at,
           location: item.location,
@@ -476,64 +478,60 @@ async function handleCron(forceUserId: string | null = null) {
   for (const [userId, info] of grouped.entries()) {
     const orderedOffsets = [...new Set(info.offsets)].sort((a, b) => b - a);
 
-    const formatItemLine = (item: BucketItem) => {
-      if (item.category === "saude") {
-        return `- ${item.name} – ${DATE_FORMATTER.format(new Date(item.expires_at))}`;
+    // Colectar todos os itens com o seu label de offset
+    type AlertItem = BucketItem & { id: string; label: string };
+    const alertItems: AlertItem[] = [];
+
+    for (const offset of orderedOffsets) {
+      const itemsForOffset = (info.buckets.get(offset) ?? []) as (BucketItem & { id: string })[];
+      for (const item of itemsForOffset) {
+        alertItems.push({ ...item, label: offsetLabel(offset) });
       }
-      return `- ${item.name} (${formatLocationLabel(item.location)}) – ${DATE_FORMATTER.format(new Date(item.expires_at))}`;
-    };
-
-    const sections = orderedOffsets
-      .map((offset) => {
-        const itemsForOffset = info.buckets.get(offset) ?? [];
-        if (itemsForOffset.length === 0) return null;
-        const lines = itemsForOffset.map(formatItemLine).join("\n");
-        return `${offsetLabel(offset)}:\n${lines}`;
-      })
-      .filter((section): section is string => Boolean(section));
-
-    if (info.includeExpired && info.expired.length > 0) {
-      const lines = info.expired.map(formatItemLine).join("\n");
-      sections.push(`Já expiraram:\n${lines}`);
     }
 
-    if (sections.length === 0) {
+    if (info.includeExpired) {
+      for (const item of info.expired as (BucketItem & { id: string })[]) {
+        alertItems.push({ ...item, label: "Já expirou" });
+      }
+    }
+
+    if (alertItems.length === 0) {
       results.push({ userId, sent: false, message: "Sem itens relevantes" });
       continue;
     }
 
-    // Determinar emoji do header com base nas categorias presentes
-    const allItems = [...orderedOffsets.flatMap(o => info.buckets.get(o) ?? []), ...info.expired];
-    const hasFood = allItems.some(i => i.category !== "saude");
-    const hasHealth = allItems.some(i => i.category === "saude");
-    const headerEmoji = hasFood && hasHealth ? "🍎💊" : hasHealth ? "💊" : "🍎";
+    let sentCount = 0;
+    for (const item of alertItems) {
+      const emoji = item.category === "saude" ? "💊" : "🍎";
+      const locationPart = item.category === "saude"
+        ? ""
+        : ` • ${formatLocationLabel(item.location)}`;
+      const datePart = DATE_FORMATTER.format(new Date(item.expires_at));
+      const text = `${emoji} ${item.name}${locationPart}\n📅 ${item.label} — ${datePart}`;
 
-    const text =
-      `${headerEmoji} Validades a acompanhar:\n\n` +
-      sections.join("\n\n") +
-      "\n\nMantém a lista atualizada para evitar desperdício.";
-
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: info.chatId,
+            text,
+            reply_markup: {
+              inline_keyboard: [[
+                { text: "✅ Consumido", callback_data: `va:consumed:${item.id}` },
+                { text: "🗑 Descartado", callback_data: `va:discard:${item.id}` },
+              ]],
+            },
+          }),
         },
-        body: JSON.stringify({
-          chat_id: info.chatId,
-          text,
-        }),
-      },
-    );
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      results.push({ userId, sent: false, message: errorText });
-      continue;
+      if (response.ok) sentCount++;
+      else console.error(`[CRON] Failed to send item ${item.id}:`, await response.text());
     }
 
-    results.push({ userId, sent: true });
+    results.push({ userId, sent: sentCount > 0 });
   }
 
   const executionTime = Date.now() - startTime;
