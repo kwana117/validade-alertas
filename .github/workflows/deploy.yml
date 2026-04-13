@@ -1,4 +1,4 @@
-name: Deploy To MacMini
+name: Deploy To Hetzner
 
 on:
   push:
@@ -17,22 +17,13 @@ jobs:
 
     env:
       APP_NAME: ${{ vars.APP_NAME || 'validade-alertas' }}
-      APP_DIR: ${{ vars.APP_DIR || '/Users/zion/apps/validade-alertas' }}
+      APP_DIR: ${{ vars.APP_DIR || '/var/www/validade-alertas' }}
       APP_PORT: ${{ vars.APP_PORT || '3020' }}
       KEEP_RELEASES: ${{ vars.KEEP_RELEASES || '5' }}
-      NODE_VERSION: ${{ vars.NODE_VERSION || '20' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Connect to Tailscale (optional)
-        if: ${{ env.TAILSCALE_AUTHKEY != '' }}
-        env:
-          TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
-        uses: tailscale/github-action@v3
-        with:
-          authkey: ${{ env.TAILSCALE_AUTHKEY }}
 
       - name: Prepare SSH key
         shell: bash
@@ -49,7 +40,7 @@ jobs:
           fi
           chmod 600 ~/.ssh/deploy_key
           if ! ssh-keygen -y -f ~/.ssh/deploy_key >/dev/null 2>&1; then
-            echo "Invalid SSH key. Set DROPLET_SSH_KEY_B64 from local key file (recommended), or paste full DROPLET_SSH_KEY."
+            echo "Invalid SSH key."
             exit 1
           fi
           ssh-keyscan -p "${{ secrets.DROPLET_PORT || '22' }}" -H "${{ secrets.DROPLET_HOST }}" >> ~/.ssh/known_hosts
@@ -93,10 +84,9 @@ jobs:
           set -euo pipefail
 
           ssh -p "${{ secrets.DROPLET_PORT || '22' }}" -i ~/.ssh/deploy_key "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}" \
-            "APP_NAME='${APP_NAME}' APP_DIR='${APP_DIR}' APP_PORT='${APP_PORT}' KEEP_RELEASES='${KEEP_RELEASES}' NODE_VERSION='${NODE_VERSION}' RELEASE_SHA='${{ github.sha }}' NEXT_PUBLIC_SUPABASE_URL='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | sed "s/'/'\\''/g")' NEXT_PUBLIC_SUPABASE_ANON_KEY='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | sed "s/'/'\\''/g")' SUPABASE_SERVICE_ROLE_KEY='$(printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | sed "s/'/'\\''/g")' TELEGRAM_BOT_TOKEN='$(printf '%s' "$TELEGRAM_BOT_TOKEN" | sed "s/'/'\\''/g")' OPENAI_API_KEY='$(printf '%s' "$OPENAI_API_KEY" | sed "s/'/'\\''/g")' OPENAI_TEXT_MODEL='$(printf '%s' "$OPENAI_TEXT_MODEL" | sed "s/'/'\\''/g")' bash -s" <<'REMOTE'
+            "APP_NAME='${APP_NAME}' APP_DIR='${APP_DIR}' APP_PORT='${APP_PORT}' KEEP_RELEASES='${KEEP_RELEASES}' RELEASE_SHA='${{ github.sha }}' NEXT_PUBLIC_SUPABASE_URL='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | sed "s/'/'\\''/g")' NEXT_PUBLIC_SUPABASE_ANON_KEY='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | sed "s/'/'\\''/g")' SUPABASE_SERVICE_ROLE_KEY='$(printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | sed "s/'/'\\''/g")' TELEGRAM_BOT_TOKEN='$(printf '%s' "$TELEGRAM_BOT_TOKEN" | sed "s/'/'\\''/g")' OPENAI_API_KEY='$(printf '%s' "$OPENAI_API_KEY" | sed "s/'/'\\''/g")' OPENAI_TEXT_MODEL='$(printf '%s' "$OPENAI_TEXT_MODEL" | sed "s/'/'\\''/g")' bash -s" <<'REMOTE'
           set -euo pipefail
 
-          export PATH="/opt/homebrew/bin:/opt/homebrew/opt/node@$NODE_VERSION/bin:$PATH"
           command -v node >/dev/null 2>&1 || { echo "node is required on server."; exit 1; }
           command -v npm >/dev/null 2>&1 || { echo "npm is required on server."; exit 1; }
           command -v pm2 >/dev/null 2>&1 || { echo "pm2 is required on server."; exit 1; }
@@ -135,7 +125,7 @@ jobs:
           pm2 save
 
           sleep 2
-          curl -fsS "http://127.0.0.1:$APP_PORT/validades/login" >/dev/null
+          curl -fsS "http://127.0.0.1:$APP_PORT/login" >/dev/null
 
           old_releases="$(ls -1dt "$APP_DIR/releases"/* 2>/dev/null | tail -n +"$((KEEP_RELEASES + 1))" || true)"
           if [ -n "$old_releases" ]; then
