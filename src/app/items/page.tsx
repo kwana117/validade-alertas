@@ -157,6 +157,12 @@ export default async function ItemsPage({ searchParams }: Props) {
 
   const itemsList = (items as PantryItem[] | null) ?? [];
   const activeItems = itemsList.filter((item) => item.status === "active");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiringSoonCount = activeItems.filter((item) => {
+    const diff = differenceInCalendarDays(new Date(item.expires_at), today);
+    return diff <= 2;
+  }).length;
   const categoryFilteredItems = categoryFilter
     ? activeItems.filter((item) => item.category === categoryFilter)
     : activeItems;
@@ -186,6 +192,14 @@ export default async function ItemsPage({ searchParams }: Props) {
             <p className="text-sm text-slate-600 dark:text-slate-300">
               Mantém os dados atualizados para receber alertas certeiros.
             </p>
+            {expiringSoonCount > 0 ? (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-200">
+                <span aria-hidden>⚠️</span>
+                {expiringSoonCount === 1
+                  ? "1 item expira nos próximos 2 dias"
+                  : `${expiringSoonCount} itens expiram nos próximos 2 dias`}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-3">
             {LOCATIONS.map((location) => (
