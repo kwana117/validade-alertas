@@ -80,11 +80,13 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_TEXT_MODEL: ${{ vars.OPENAI_TEXT_MODEL }}
+          AUTO_LOGIN_EMAIL: ${{ secrets.AUTO_LOGIN_EMAIL }}
+          AUTO_LOGIN_PASSWORD: ${{ secrets.AUTO_LOGIN_PASSWORD }}
         run: |
           set -euo pipefail
 
           ssh -p "${{ secrets.DROPLET_PORT || '22' }}" -i ~/.ssh/deploy_key "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}" \
-            "APP_NAME='${APP_NAME}' APP_DIR='${APP_DIR}' APP_PORT='${APP_PORT}' KEEP_RELEASES='${KEEP_RELEASES}' RELEASE_SHA='${{ github.sha }}' NEXT_PUBLIC_SUPABASE_URL='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | sed "s/'/'\\''/g")' NEXT_PUBLIC_SUPABASE_ANON_KEY='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | sed "s/'/'\\''/g")' SUPABASE_SERVICE_ROLE_KEY='$(printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | sed "s/'/'\\''/g")' TELEGRAM_BOT_TOKEN='$(printf '%s' "$TELEGRAM_BOT_TOKEN" | sed "s/'/'\\''/g")' OPENAI_API_KEY='$(printf '%s' "$OPENAI_API_KEY" | sed "s/'/'\\''/g")' OPENAI_TEXT_MODEL='$(printf '%s' "$OPENAI_TEXT_MODEL" | sed "s/'/'\\''/g")' bash -s" <<'REMOTE'
+            "APP_NAME='${APP_NAME}' APP_DIR='${APP_DIR}' APP_PORT='${APP_PORT}' KEEP_RELEASES='${KEEP_RELEASES}' RELEASE_SHA='${{ github.sha }}' NEXT_PUBLIC_SUPABASE_URL='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | sed "s/'/'\\''/g")' NEXT_PUBLIC_SUPABASE_ANON_KEY='$(printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | sed "s/'/'\\''/g")' SUPABASE_SERVICE_ROLE_KEY='$(printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | sed "s/'/'\\''/g")' TELEGRAM_BOT_TOKEN='$(printf '%s' "$TELEGRAM_BOT_TOKEN" | sed "s/'/'\\''/g")' OPENAI_API_KEY='$(printf '%s' "$OPENAI_API_KEY" | sed "s/'/'\\''/g")' OPENAI_TEXT_MODEL='$(printf '%s' "$OPENAI_TEXT_MODEL" | sed "s/'/'\\''/g")' AUTO_LOGIN_EMAIL='$(printf '%s' "$AUTO_LOGIN_EMAIL" | sed "s/'/'\\''/g")' AUTO_LOGIN_PASSWORD='$(printf '%s' "$AUTO_LOGIN_PASSWORD" | sed "s/'/'\\''/g")' bash -s" <<'REMOTE'
           set -euo pipefail
 
           command -v node >/dev/null 2>&1 || { echo "node is required on server."; exit 1; }
@@ -107,6 +109,8 @@ jobs:
           TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
           OPENAI_API_KEY=$OPENAI_API_KEY
           OPENAI_TEXT_MODEL=$OPENAI_TEXT_MODEL
+          AUTO_LOGIN_EMAIL=$AUTO_LOGIN_EMAIL
+          AUTO_LOGIN_PASSWORD=$AUTO_LOGIN_PASSWORD
           ENV
           chmod 600 "$APP_DIR/shared/.env.production"
 
