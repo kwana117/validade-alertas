@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   title: "Validade Alertas",
   description:
     "MVP para alertar a validade de alimentos com Supabase e Telegram.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: { index: false, follow: false },
+  },
 };
 
 export const dynamic = "force-dynamic";
