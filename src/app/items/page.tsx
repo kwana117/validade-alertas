@@ -327,9 +327,24 @@ export default async function ItemsPage({ searchParams }: Props) {
                             <input type="hidden" name="status" value="active" />
                             <button
                               type="submit"
-                              className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                              title="Restaurar"
+                              aria-label="Restaurar"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                             >
-                              Restaurar
+                              <svg
+                                aria-hidden="true"
+                                viewBox="0 0 24 24"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                                <path d="M3 4v5h5" />
+                              </svg>
+                              <span className="sr-only">Restaurar</span>
                             </button>
                           </form>
                           {enableItemTestButton ? (
@@ -395,9 +410,23 @@ export default async function ItemsPage({ searchParams }: Props) {
                           <input type="hidden" name="status" value="consumed" />
                           <button
                             type="submit"
-                            className="rounded-full border border-slate-200 px-3 py-1 font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                            title="Marcar consumido"
+                            aria-label="Marcar consumido"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200 text-emerald-700 transition hover:border-emerald-400 hover:text-emerald-900 dark:border-emerald-400/50 dark:text-emerald-200 dark:hover:border-emerald-300 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-100"
                           >
-                            Marcar consumido
+                            <svg
+                              aria-hidden="true"
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M5 12l5 5L20 7" />
+                            </svg>
+                            <span className="sr-only">Marcar consumido</span>
                           </button>
                         </form>
                         <form action={updateItemStatus}>
@@ -405,7 +434,9 @@ export default async function ItemsPage({ searchParams }: Props) {
                           <input type="hidden" name="status" value="discarded" />
                           <button
                             type="submit"
-                            className="inline-flex items-center gap-2 rounded-full border border-amber-200 px-3 py-1 font-medium text-amber-700 transition hover:border-amber-400 hover:text-amber-900 dark:border-amber-400/50 dark:text-amber-200 dark:hover:border-amber-300 dark:hover:bg-amber-500/10 dark:hover:text-amber-100"
+                            title="Marcar descartado"
+                            aria-label="Marcar descartado"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-amber-200 text-amber-700 transition hover:border-amber-400 hover:text-amber-900 dark:border-amber-400/50 dark:text-amber-200 dark:hover:border-amber-300 dark:hover:bg-amber-500/10 dark:hover:text-amber-100"
                           >
                             <svg
                               aria-hidden="true"
@@ -420,7 +451,7 @@ export default async function ItemsPage({ searchParams }: Props) {
                               <circle cx="12" cy="12" r="9" />
                               <path d="M5 5l14 14" />
                             </svg>
-                            Marcar descartado
+                            <span className="sr-only">Marcar descartado</span>
                           </button>
                         </form>
                         {enableItemTestButton ? (

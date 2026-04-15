@@ -24,7 +24,9 @@ export function DeleteItemForm({ itemId, action }: Props) {
       <input type="hidden" name="itemId" value={itemId} />
       <button
         type="submit"
-        className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-3 py-1 text-sm font-medium text-rose-700 transition hover:border-rose-400 hover:text-rose-900 dark:border-rose-400/50 dark:text-rose-200 dark:hover:border-rose-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-100"
+        title="Apagar definitivamente"
+        aria-label="Apagar definitivamente"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 text-rose-700 transition hover:border-rose-400 hover:text-rose-900 dark:border-rose-400/50 dark:text-rose-200 dark:hover:border-rose-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-100"
         disabled={isSubmitting}
       >
         <svg
@@ -43,7 +45,7 @@ export function DeleteItemForm({ itemId, action }: Props) {
           <path d="M10 11v6" />
           <path d="M14 11v6" />
         </svg>
-        {isSubmitting ? "A apagar..." : "Apagar definitivamente"}
+        <span className="sr-only">{isSubmitting ? "A apagar..." : "Apagar definitivamente"}</span>
       </button>
     </form>
   );
