@@ -1,8 +1,8 @@
-import { differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getEffectiveExpiry, daysUntilExpiry } from "@/lib/date-utils";
 import { LOCATIONS, CATEGORIES, STATUS_CLASSES, STATUS_LABELS, formatLocationLabel, formatCategoryLabel, type CategoryType } from "@/lib/items";
 import { DeleteItemForm } from "@/app/items/delete-item-form";
 import { EditItemName } from "@/app/items/edit-item-name";
@@ -21,6 +21,8 @@ type PantryItem = {
   category: string;
   status: string;
   updated_at?: string | null;
+  opened_at?: string | null;
+  opened_duration_days?: number | null;
 };
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("pt-PT", {
@@ -76,6 +78,46 @@ async function deleteItemAction(formData: FormData) {
   await supabase
     .from("items")
     .delete()
+    .eq("id", itemId)
+    .eq("user_id", user.id);
+
+  revalidatePath("/items");
+}
+
+async function markItemOpened(formData: FormData) {
+  "use server";
+
+  const itemId = formData.get("itemId")?.toString();
+  if (!itemId) return;
+
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: item } = await supabase
+    .from("items")
+    .select("name")
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!item) return;
+
+  const { data: frequentItem } = await supabase
+    .from("frequent_items")
+    .select("opened_duration_days")
+    .eq("user_id", user.id)
+    .ilike("name", item.name)
+    .maybeSingle();
+
+  const openedDurationDays = frequentItem?.opened_duration_days ?? 3;
+
+  await supabase
+    .from("items")
+    .update({
+      opened_at: new Date().toISOString(),
+      opened_duration_days: openedDurationDays,
+    })
     .eq("id", itemId)
     .eq("user_id", user.id);
 
@@ -160,7 +202,7 @@ export default async function ItemsPage({ searchParams }: Props) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const expiringSoonCount = activeItems.filter((item) => {
-    const diff = differenceInCalendarDays(new Date(item.expires_at), today);
+    const diff = daysUntilExpiry(item);
     return diff <= 2;
   }).length;
   const categoryFilteredItems = categoryFilter
@@ -401,12 +443,24 @@ export default async function ItemsPage({ searchParams }: Props) {
                         action={updateItemName}
                       />
                       <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                        <p>
-                          Validade: {DATE_FORMATTER.format(new Date(item.expires_at))}
-                        </p>
-                        <p className="text-slate-500 dark:text-slate-400">
-                          {daysUntil(item.expires_at)}
-                        </p>
+                        {item.opened_at && item.opened_duration_days ? (
+                          <>
+                            <p className="flex items-center gap-1.5">
+                              <span className="font-medium text-sky-600 dark:text-sky-400">📦 Aberto</span>
+                              <span className="text-slate-500 dark:text-slate-400">— vence {DATE_FORMATTER.format(getEffectiveExpiry(item))}</span>
+                            </p>
+                            <p className="text-slate-500 dark:text-slate-400">
+                              {daysUntil(item)}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p>Validade: {DATE_FORMATTER.format(new Date(item.expires_at))}</p>
+                            <p className="text-slate-500 dark:text-slate-400">
+                              {daysUntil(item)}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col gap-3 md:items-end">
@@ -468,6 +522,33 @@ export default async function ItemsPage({ searchParams }: Props) {
                             <span className="sr-only">Marcar descartado</span>
                           </button>
                         </form>
+                        {!item.opened_at && (
+                          <form action={markItemOpened}>
+                            <input type="hidden" name="itemId" value={item.id} />
+                            <button
+                              type="submit"
+                              title="Marcar como aberto"
+                              aria-label="Marcar como aberto"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sky-200 text-sky-700 transition hover:border-sky-400 hover:text-sky-900 dark:border-sky-400/50 dark:text-sky-300 dark:hover:border-sky-300 dark:hover:bg-sky-500/10 dark:hover:text-sky-100"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                viewBox="0 0 24 24"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M5 8h14" />
+                                <path d="M5 8a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2" />
+                                <path d="M10 8V6a2 2 0 1 1 4 0v2" />
+                              </svg>
+                              <span className="sr-only">Marcar como aberto</span>
+                            </button>
+                          </form>
+                        )}
                         {enableItemTestButton ? (
                           <TestItemButton itemId={item.id} />
                         ) : null}
@@ -487,12 +568,8 @@ export default async function ItemsPage({ searchParams }: Props) {
   );
 }
 
-function daysUntil(expiresAt: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const expiry = new Date(expiresAt);
-  const diff = differenceInCalendarDays(expiry, today);
-
+function daysUntil(item: { expires_at: string; opened_at?: string | null; opened_duration_days?: number | null }) {
+  const diff = daysUntilExpiry(item);
   if (diff < 0) return "Já expirou 🚨";
   if (diff === 0) return "Expira hoje";
   if (diff === 1) return "Expira amanhã";

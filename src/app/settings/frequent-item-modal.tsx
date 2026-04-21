@@ -64,6 +64,7 @@ export function FrequentItemModal({ isOpen, onClose, onSave, editingItem }: Prop
         name: name.trim(),
         input_mode: inputMode,
         default_duration_days: inputMode === "duration" ? durationDays : null,
+        opened_duration_days: null,
         allowed_locations: allowedLocations,
       });
       onClose();

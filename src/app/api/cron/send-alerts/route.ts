@@ -2,6 +2,7 @@ import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { formatLocationLabel } from "@/lib/items";
+import { getEffectiveExpiry } from "@/lib/date-utils";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("pt-PT", {
   day: "2-digit",
@@ -388,22 +389,43 @@ async function handleCron(forceUserId: string | null = null) {
   const minDate = maxExpiredWindow > 0 ? addDays(today, -maxExpiredWindow) : today;
   const maxDate = addDays(today, maxOffset);
 
-  const { data: items, error: itemsError } = await supabase
-    .from("items")
-    .select("id,name,expires_at,location,category,user_id,status")
-    .eq("status", "active")
-    .gte("expires_at", format(minDate, "yyyy-MM-dd"))
-    .lte("expires_at", format(maxDate, "yyyy-MM-dd"))
-    .in(
-      "user_id",
-      profileRows.map((profile) => profile.id),
-    );
+  const userIds = profileRows.map((profile) => profile.id);
+
+  const [{ data: nonOpenedItems, error: itemsError }, { data: openedItems, error: openedError }] = await Promise.all([
+    supabase
+      .from("items")
+      .select("id,name,expires_at,location,category,user_id,status,opened_at,opened_duration_days")
+      .eq("status", "active")
+      .is("opened_at", null)
+      .gte("expires_at", format(minDate, "yyyy-MM-dd"))
+      .lte("expires_at", format(maxDate, "yyyy-MM-dd"))
+      .in("user_id", userIds),
+    supabase
+      .from("items")
+      .select("id,name,expires_at,location,category,user_id,status,opened_at,opened_duration_days")
+      .eq("status", "active")
+      .not("opened_at", "is", null)
+      .in("user_id", userIds),
+  ]);
 
   if (itemsError) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
+  if (openedError) {
+    return NextResponse.json({ error: openedError.message }, { status: 500 });
+  }
 
-  type BucketItem = { id: string; name: string; expires_at: string; location: string; category: string };
+  const items = [
+    ...(nonOpenedItems ?? []),
+    ...(openedItems ?? []).filter((item) => {
+      const effectiveExpiry = getEffectiveExpiry(item);
+      const diff = differenceInCalendarDays(effectiveExpiry, today);
+      const maxExpiredDays = profileRows.find(p => p.id === item.user_id)?.alert_expired_max_days ?? 7;
+      return diff >= -maxExpiredDays && diff <= maxOffset;
+    }),
+  ];
+
+  type BucketItem = { id: string; name: string; expires_at: string; location: string; category: string; opened_at?: string | null; opened_duration_days?: number | null };
 
   const grouped = new Map<
     string,
@@ -444,30 +466,27 @@ async function handleCron(forceUserId: string | null = null) {
     }
 
     const entry = grouped.get(item.user_id)!;
-    const expiresAt = new Date(item.expires_at);
-    const diff = differenceInCalendarDays(expiresAt, today);
+    const effectiveExpiry = getEffectiveExpiry(item);
+    const diff = differenceInCalendarDays(effectiveExpiry, today);
+    const bucketItem = {
+      id: item.id,
+      name: item.name,
+      expires_at: format(effectiveExpiry, "yyyy-MM-dd"),
+      location: item.location,
+      category: item.category ?? "alimentar",
+      opened_at: item.opened_at ?? null,
+      opened_duration_days: item.opened_duration_days ?? null,
+    };
 
     if (diff >= 0 && entry.buckets.has(diff)) {
-      entry.buckets.get(diff)?.push({
-        id: item.id,
-        name: item.name,
-        expires_at: item.expires_at,
-        location: item.location,
-        category: item.category ?? "alimentar",
-      });
+      entry.buckets.get(diff)?.push(bucketItem);
       continue;
     }
 
     if (diff < 0 && entry.includeExpired) {
       const daysExpired = Math.abs(diff);
       if (daysExpired <= entry.expiredMaxDays) {
-        entry.expired.push({
-          id: item.id,
-          name: item.name,
-          expires_at: item.expires_at,
-          location: item.location,
-          category: item.category ?? "alimentar",
-        });
+        entry.expired.push(bucketItem);
       }
     }
   }
@@ -509,6 +528,16 @@ async function handleCron(forceUserId: string | null = null) {
       const datePart = DATE_FORMATTER.format(new Date(item.expires_at));
       const text = `${emoji} ${item.name}${locationPart}\n📅 ${item.label} — ${datePart}`;
 
+      const openedPrefix = item.opened_at ? "📦 " : "";
+      const fullText = `${openedPrefix}${text}`;
+      const actionRow = [
+        { text: "✅ Consumido", callback_data: `va:consumed:${item.id}` },
+        { text: "🗑 Descartado", callback_data: `va:discard:${item.id}` },
+      ];
+      if (!item.opened_at) {
+        actionRow.push({ text: "📦 Abri", callback_data: `va:opened:${item.id}` });
+      }
+
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
         {
@@ -516,12 +545,9 @@ async function handleCron(forceUserId: string | null = null) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: info.chatId,
-            text,
+            text: fullText,
             reply_markup: {
-              inline_keyboard: [[
-                { text: "✅ Consumido", callback_data: `va:consumed:${item.id}` },
-                { text: "🗑 Descartado", callback_data: `va:discard:${item.id}` },
-              ]],
+              inline_keyboard: [actionRow],
             },
           }),
         },

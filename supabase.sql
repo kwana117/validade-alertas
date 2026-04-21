@@ -137,3 +137,16 @@ create trigger trg_frequent_items_updated_at
 before update on public.frequent_items
 for each row
 execute function public.set_updated_at();
+
+-- =============================================
+-- ABERTURA DE PRODUTOS
+-- =============================================
+
+alter table public.items
+  add column if not exists opened_at timestamptz null;
+
+alter table public.items
+  add column if not exists opened_duration_days int null;
+
+alter table public.frequent_items
+  add column if not exists opened_duration_days int null;

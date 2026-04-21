@@ -8,6 +8,7 @@ export interface FrequentItem {
   name: string;
   input_mode: InputMode;
   default_duration_days: number | null;
+  opened_duration_days: number | null;
   allowed_locations: LocationType[];
   usage_count: number;
   last_used_at: string | null;
@@ -19,6 +20,7 @@ export interface FrequentItemInput {
   name: string;
   input_mode: InputMode;
   default_duration_days: number | null;
+  opened_duration_days: number | null;
   allowed_locations: LocationType[];
 }
 
@@ -42,36 +44,40 @@ export const DURATION_PRESETS = [
   { days: 14, label: "2 sem" },
 ] as const;
 
-export const DEFAULT_PRODUCTS: Record<LocationType, ProductSuggestion[]> = {
+export interface ProductSuggestionWithOpen extends ProductSuggestion {
+  opened_duration_days: number | null;
+}
+
+export const DEFAULT_PRODUCTS: Record<LocationType, ProductSuggestionWithOpen[]> = {
   fridge: [
-    { id: "default-iogurte", name: "Iogurte", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-leite", name: "Leite", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-queijo", name: "Queijo", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-manteiga", name: "Manteiga", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-ovos", name: "Ovos", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-fiambre", name: "Fiambre", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-sopa-caseira", name: "Sopa caseira", input_mode: "duration", default_duration_days: 3, isFrequent: false },
-    { id: "default-restos", name: "Restos", input_mode: "duration", default_duration_days: 2, isFrequent: false },
-    { id: "default-frutas", name: "Frutas", input_mode: "duration", default_duration_days: 5, isFrequent: false },
+    { id: "default-iogurte", name: "Iogurte", input_mode: "date", default_duration_days: null, opened_duration_days: 7, isFrequent: false },
+    { id: "default-leite", name: "Leite", input_mode: "date", default_duration_days: null, opened_duration_days: 3, isFrequent: false },
+    { id: "default-queijo", name: "Queijo", input_mode: "date", default_duration_days: null, opened_duration_days: 7, isFrequent: false },
+    { id: "default-manteiga", name: "Manteiga", input_mode: "date", default_duration_days: null, opened_duration_days: 21, isFrequent: false },
+    { id: "default-ovos", name: "Ovos", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
+    { id: "default-fiambre", name: "Fiambre", input_mode: "date", default_duration_days: null, opened_duration_days: 5, isFrequent: false },
+    { id: "default-sopa-caseira", name: "Sopa caseira", input_mode: "duration", default_duration_days: 3, opened_duration_days: 3, isFrequent: false },
+    { id: "default-restos", name: "Restos", input_mode: "duration", default_duration_days: 2, opened_duration_days: 2, isFrequent: false },
+    { id: "default-frutas", name: "Frutas", input_mode: "duration", default_duration_days: 5, opened_duration_days: 3, isFrequent: false },
   ],
   freezer: [
-    { id: "default-carne", name: "Carne", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-peixe", name: "Peixe", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-gelado", name: "Gelado", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-pao-congelado", name: "Pão", input_mode: "duration", default_duration_days: 30, isFrequent: false },
-    { id: "default-sopa-congelada", name: "Sopa congelada", input_mode: "duration", default_duration_days: 90, isFrequent: false },
+    { id: "default-carne", name: "Carne", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
+    { id: "default-peixe", name: "Peixe", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
+    { id: "default-gelado", name: "Gelado", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
+    { id: "default-pao-congelado", name: "Pão", input_mode: "duration", default_duration_days: 30, opened_duration_days: null, isFrequent: false },
+    { id: "default-sopa-congelada", name: "Sopa congelada", input_mode: "duration", default_duration_days: 90, opened_duration_days: null, isFrequent: false },
   ],
   pantry: [
-    { id: "default-arroz", name: "Arroz", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-massa", name: "Massa", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-conservas", name: "Conservas", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-bolachas", name: "Bolachas", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-azeite", name: "Azeite", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-especiarias", name: "Especiarias", input_mode: "date", default_duration_days: null, isFrequent: false },
+    { id: "default-arroz", name: "Arroz", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
+    { id: "default-massa", name: "Massa", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
+    { id: "default-conservas", name: "Conservas", input_mode: "date", default_duration_days: null, opened_duration_days: 3, isFrequent: false },
+    { id: "default-bolachas", name: "Bolachas", input_mode: "date", default_duration_days: null, opened_duration_days: 14, isFrequent: false },
+    { id: "default-azeite", name: "Azeite", input_mode: "date", default_duration_days: null, opened_duration_days: 60, isFrequent: false },
+    { id: "default-especiarias", name: "Especiarias", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
   ],
   geral: [
-    { id: "default-medicamento", name: "Medicamento", input_mode: "date", default_duration_days: null, isFrequent: false },
-    { id: "default-suplemento", name: "Suplemento", input_mode: "date", default_duration_days: null, isFrequent: false },
+    { id: "default-medicamento", name: "Medicamento", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
+    { id: "default-suplemento", name: "Suplemento", input_mode: "date", default_duration_days: null, opened_duration_days: null, isFrequent: false },
   ],
 };
 
