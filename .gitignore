@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 tmp/
 /APP_CONTEXT.md
+
+# artefactos de testes automatizados
+.playwright-mcp/
